@@ -74,11 +74,11 @@ class GraphicsRenderer {
 		var seg = (Math.PI * 2) / totalSegs;
 		
 		var bucket = prepareBucket(path, glStack);
-
+		var fill = bucket.getData(Fill);
 		
-		if(bucket != null) {
-			var verts = bucket.verts;
-			var indices = bucket.indices;
+		if(fill != null) {
+			var verts = fill.verts;
+			var indices = fill.indices;
 			
 			var vertPos = Std.int (verts.length / 2);
 			
@@ -114,7 +114,7 @@ class GraphicsRenderer {
 				
 			}
 			
-			buildLine (path, bucket.line);
+			buildLine (path, bucket);
 			path.points = tempPoints;
 			
 		}
@@ -134,10 +134,11 @@ class GraphicsRenderer {
 		
 		
 		var bucket = prepareBucket(path, glStack);
-		bucket.drawMode = glStack.gl.TRIANGLE_FAN;
-		bucket.verts = points;
+		var fill = bucket.getData(Fill);
+		fill.drawMode = glStack.gl.TRIANGLE_FAN;
+		fill.verts = points;
 		
-		var indices = bucket.indices;
+		var indices = fill.indices;
 		var length = Std.int (points.length / 2);
 		for (i in 0...length) {
 			
@@ -147,14 +148,16 @@ class GraphicsRenderer {
 		
 		if (path.line.width > 0) {
 			
-			buildLine (path, bucket.line, localCoords);
+			buildLine (path, bucket, localCoords);
 			
 		}
 	}
 	
-	public static function buildLine (path:DrawPath, bucket:GLBucketData, localCoords:Bool = false):Void {
+	public static function buildLine (path:DrawPath, bucket:GLBucket, localCoords:Bool = false):Void {
 		var points = path.points;
 		if (points.length == 0) return;
+		
+		var line = bucket.getData(Line);
 		
 		if (localCoords) {
 			for (i in 0...Std.int(points.length / 2)) {
@@ -195,8 +198,8 @@ class GraphicsRenderer {
 			
 		}
 		
-		var verts = bucket.verts;
-		var indices = bucket.indices;
+		var verts = line.verts;
+		var indices = line.indices;
 		var length = Std.int (points.length / 2);
 		var indexCount = points.length;
 		var indexStart = Std.int (verts.length / 6);
@@ -416,10 +419,11 @@ class GraphicsRenderer {
 		var length = Std.int (points.length / 2);
 		
 		var bucket = prepareBucket(path, glStack);
-		var verts = bucket.verts;
-		var indices = bucket.indices;
+		var fill = bucket.getData(Fill);
+		var verts = fill.verts;
+		var indices = fill.indices;
 		
-		if (bucket != null) {
+		if (fill != null) {
 			var triangles = PolyK.triangulate (points);
 			var vertPos = verts.length / 2;
 			
@@ -445,7 +449,7 @@ class GraphicsRenderer {
 		
 		if (path.line.width > 0) {
 			
-			buildLine (path, bucket.line);
+			buildLine (path, bucket);
 			
 		}
 	}
@@ -463,10 +467,11 @@ class GraphicsRenderer {
 		}
 		
 		var bucket = prepareBucket(path, glStack);
+		var fill = bucket.getData(Fill);
 		
-		if(bucket != null) {
-			var verts = bucket.verts;
-			var indices = bucket.indices;
+		if(fill != null) {
+			var verts = fill.verts;
+			var indices = fill.indices;
 			
 			var vertPos = Std.int (verts.length / 2);
 			
@@ -492,7 +497,7 @@ class GraphicsRenderer {
 			
 			var tempPoints = path.points;
 			path.points = [ x, y, x + width, y, x + width, y + height, x, y + height, x, y];
-			buildLine (path, bucket.line);
+			buildLine (path, bucket);
 			path.points = tempPoints;
 			
 		}
@@ -521,10 +526,11 @@ class GraphicsRenderer {
 		recPoints = recPoints.concat (quadraticBezierCurve (x + radius, y, x, y, x, y + radius));
 		
 		var bucket = prepareBucket(path, glStack);
+		var fill = bucket.getData(Fill);
 		
-		if (bucket != null) {
-			var verts = bucket.verts;
-			var indices = bucket.indices;
+		if (fill != null) {
+			var verts = fill.verts;
+			var indices = fill.indices;
 			
 			var vecPos = verts.length / 2;
 			
@@ -555,7 +561,7 @@ class GraphicsRenderer {
 			
 			var tempPoints = path.points;
 			path.points = recPoints;
-			buildLine (path, bucket.line);
+			buildLine (path, bucket);
 			path.points = tempPoints;
 			
 		}
@@ -592,18 +598,19 @@ class GraphicsRenderer {
 		var hasColors = colors != null && colors.length > 0;
 		
 		var bucket = prepareBucket(path, glStack);
-		bucket.rawVerts = true;
-		bucket.glLength = indices.length;
-		bucket.stride = 8;
+		var fill = bucket.getData(Fill);
+		fill.rawVerts = true;
+		fill.glLength = indices.length;
+		fill.stride = 8;
 		
-		var vertsLength = bucket.glLength * bucket.stride;
+		var vertsLength = fill.glLength * fill.stride;
 		var verts:Float32Array;
 		
-		if (bucket.glVerts == null || bucket.glVerts.length < vertsLength) {
+		if (fill.glVerts == null || fill.glVerts.length < vertsLength) {
 			verts = new Float32Array(vertsLength);
-			bucket.glVerts = verts;
+			fill.glVerts = verts;
 		} else {
-			verts = bucket.glVerts;
+			verts = fill.glVerts;
 		}
 		
 		var v0 = 0; var v1 = 0; var v2 = 0;
@@ -831,8 +838,8 @@ class GraphicsRenderer {
 				case _:
 			}
 			
-			for (data in bucket.data) {
-				if (data.line != null && data.line.verts.length > 0) {
+			for (line in bucket.lines) {
+				if (line != null && line.verts.length > 0) {
 					batchDrawing = renderSession.spriteBatch.drawing;
 					if (batchDrawing && !localCoords) {
 						renderSession.spriteBatch.end();
@@ -846,13 +853,13 @@ class GraphicsRenderer {
 					gl.uniform2f (shader.offsetVector, -offset.x, -offset.y);
 					gl.uniform1f (shader.alpha, object.__worldAlpha);
 					
-					gl.bindBuffer (gl.ARRAY_BUFFER, data.line.vertsBuffer);
+					gl.bindBuffer (gl.ARRAY_BUFFER, line.vertsBuffer);
 
 					gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, 4 * 6, 0);
 					gl.vertexAttribPointer (shader.colorAttribute, 4, gl.FLOAT, false, 4 * 6, 2 * 4);
 					
-					gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, data.line.indexBuffer);
-					gl.drawElements (gl.TRIANGLE_STRIP, data.line.indices.length, gl.UNSIGNED_SHORT, 0);
+					gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, line.indexBuffer);
+					gl.drawElements (gl.TRIANGLE_STRIP, line.indices.length, gl.UNSIGNED_SHORT, 0);
 				}
 			}
 			
@@ -909,13 +916,16 @@ class GraphicsRenderer {
 			glStack.lastIndex++;
 		}
 		
+		for (bucket in glStack.buckets) {
+			bucket.optimize();
+		}
+		
 		glStack.upload();
 		
 	}
 	
-	private static function prepareBucket(path:DrawPath, glStack:GLStack):GLBucketData {
+	private static function prepareBucket(path:DrawPath, glStack:GLStack):GLBucket {
 		var bucket:GLBucket = null;
-		
 		switch(path.fill) {
 			case Color(c, a):
 				bucket = switchBucket(path.fillIndex, glStack, Fill);
@@ -970,9 +980,8 @@ class GraphicsRenderer {
 		}
 		
 		bucket.graphicType = path.type;
-		var bucketData = bucket.getData();
 		
-		return bucketData;
+		return bucket;
 	}
 	
 	private static function getBucket(glStack:GLStack, mode:BucketMode):GLBucket {
@@ -986,15 +995,18 @@ class GraphicsRenderer {
 	}
 	
 	private static function switchBucket (fillIndex:Int, glStack:GLStack, mode:BucketMode):GLBucket {
-		var bucket:GLBucket;
 		
-		if (glStack.buckets.length == 0) {
-			bucket = getBucket(glStack, mode);
-		} else {
-			bucket = glStack.buckets[glStack.buckets.length - 1];
-			if (bucket.fillIndex != fillIndex) {
-				bucket = getBucket(glStack, mode);
+		var bucket:GLBucket = null;
+		
+		for (b in glStack.buckets) {
+			if (b.fillIndex == fillIndex) {
+				bucket = b;
+				break;
 			}
+		}
+		
+		if (bucket == null) {
+			bucket = getBucket(glStack, mode);
 		}
 		
 		bucket.dirty = true;
@@ -1074,8 +1086,8 @@ class GraphicsRenderer {
 	private static function renderDrawTriangles(bucket:GLBucket, shader:DrawTrianglesShader, renderSession:RenderSession) {
 		var gl = renderSession.gl;
 		
-		for (data in bucket.data) {
-			if (data.destroyed) continue;
+		for (fill in bucket.fills) {
+			if (fill.available) continue;
 			
 			if (bucket.texture == null) {
 				// TODO draw it with color
@@ -1083,8 +1095,8 @@ class GraphicsRenderer {
 				bindTexture(gl, bucket);
 			}
 			
-			bindDrawTrianglesBuffer(gl, shader, data);
-			gl.drawArrays(gl.TRIANGLES, data.glStart, data.glLength);
+			bindDrawTrianglesBuffer(gl, shader, fill);
+			gl.drawArrays(gl.TRIANGLES, fill.glStart, fill.glLength);
 		}
 	}
 	
@@ -1093,14 +1105,14 @@ class GraphicsRenderer {
 		renderSession.spriteBatch.renderTiles(object, cast args[0], cast args[1], cast args[2], cast args[3], cast args[4]);
 	}
 	
-	private static function bindDrawTrianglesBuffer(gl:GLRenderContext, shader:DrawTrianglesShader, data:GLBucketData) {
+	private static function bindDrawTrianglesBuffer(gl:GLRenderContext, shader:DrawTrianglesShader, fill:GLBucketData) {
 		//if (lastVertsBuffer == data.vertsBuffer) {
 			//return;
-		//}
+		//} 
 		//lastVertsBuffer = data.vertsBuffer;
 		
-		gl.bindBuffer (gl.ARRAY_BUFFER, data.vertsBuffer);
-		var stride =  data.stride * 4;
+		gl.bindBuffer (gl.ARRAY_BUFFER, fill.vertsBuffer);
+		var stride =  fill.stride * 4;
 		gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
 		gl.vertexAttribPointer (shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
 		gl.vertexAttribPointer (shader.colorAttribute, 4, gl.FLOAT, false, stride, 4 * 4);
@@ -1168,7 +1180,9 @@ class GLStack {
 	public function upload() {
 		for (bucket in buckets) {
 			
-			if (bucket.dirty) bucket.upload ();
+			if (bucket.dirty) {
+				bucket.upload ();
+			}
 			
 		}
 	}
@@ -1184,11 +1198,12 @@ class GLBucket {
 	
 	public var lastIndex:Int;
 	
-	public var fillIndex:Int = 0;
+	public var fillIndex:Int = -1;
 	
 	public var mode:BucketMode;
 	
-	public var data:Array<GLBucketData> = [];
+	public var fills:Array<GLBucketData> = [];
+	public var lines:Array<GLBucketData> = [];
 	
 	public var bitmap:BitmapData;
 	public var texture:GLTexture;
@@ -1220,11 +1235,18 @@ class GLBucket {
 		textureBR = new Point(1, 1);
 	}
 	
-	public function getData():GLBucketData {
+	public function getData(type:BucketDataType):GLBucketData {
+		var data:Array<GLBucketData>;
+		switch(type) {
+			case Fill:
+				data = fills;
+			case _:
+				data = lines;
+		}
 		var result:GLBucketData = null;
 		var remove = false;
 		for (d in data) {
-			if (d.destroyed) {
+			if (d.available) {
 				result = d;
 				remove = true;
 				break;
@@ -1235,8 +1257,9 @@ class GLBucket {
 			result = new GLBucketData(gl);
 		}
 		
-		result.destroyed = false;
+		result.available = false;
 		result.parent = this;
+		result.type = type;
 		
 		if(remove) data.remove(result);
 		data.push(result);
@@ -1244,11 +1267,86 @@ class GLBucket {
 		return result;
 	}
 	
-	public function reset ():Void {
-		for (d in data) {
-			d.destroy();
+	public function optimize() {
+		
+		inline function opt(data:Array<GLBucketData>, type:BucketDataType) {
+			if (data.length > 1) {
+				var result:Array<GLBucketData> = [];
+				var tmp:GLBucketData = null;
+				var last:GLBucketData = null;
+				var i:Int = 0;
+				var before = data.length;
+				for (d in data) {
+					if (d.available || d.rawVerts || d.rawIndices) {
+						if (tmp != null) {
+							result.push(tmp);
+							tmp = null;
+						}
+						result.push(d);
+						last = d;
+						//trace("destroyed or raw data");
+						continue;
+					}
+					//trace("last null? "+(last == null)+" or same drawmode? "+ (last != null && last.drawMode == d.drawMode) + " " + d.drawMode);
+					if (last == null || (last.drawMode == d.drawMode)) {
+						if (tmp == null) {
+							tmp = d;
+							//trace(tmp.vertsBuffer, tmp.indexBuffer);
+							i = tmp.indices[tmp.indices.length - 1] + 1;
+						} else {
+							tmp.verts = tmp.verts.concat(d.verts);
+							tmp.indices = tmp.indices.concat(d.indices.map(function(ind) return ind + i));
+							i = tmp.indices[tmp.indices.length - 1] + 1;
+						}
+						last = d;
+					} else {
+						if (tmp != null) {
+							result.push(tmp);
+							tmp = null;
+						}
+						result.push(d);
+						last = d;
+						continue;
+					}
+					
+				}
+				
+				if (result.length == 0 && tmp != null) {
+					result.push(tmp);
+				}
+				
+				if(result.length > 0) {
+					switch(type) {
+						case Fill:
+							this.fills = result;
+						case _:
+							this.lines = result;
+					}
+					//data = result;
+				}
+				
+				trace("Optimized from: " + before + " to: " + result.length);
+				
+			}
 		}
-		fillIndex = 0;
+		
+		//opt(fills, Fill);
+		opt(lines, Line);
+		
+		
+	}
+	
+	
+	public function reset ():Void {
+		for (fill in fills) {
+			fill.reset();
+		}
+		
+		for (line in lines) {
+			line.reset();
+		}
+		
+		fillIndex = -1;
 		uploadTileBuffer = true;
 		graphicType = GraphicType.Polygon;
 	}
@@ -1271,9 +1369,17 @@ class GLBucket {
 			uploadTileBuffer = false;
 		}
 
-		for (d in data) {
-			if (!d.destroyed) {
-				d.upload();
+		if(this.mode != Line) {
+			for (fill in fills) {
+				if (!fill.available) {
+					fill.upload();
+				}
+			}
+		}
+		
+		for (line in lines) {
+			if (!line.available) {
+				line.upload();
 			}
 		}
 		
@@ -1283,6 +1389,8 @@ class GLBucket {
 }
 
 class GLBucketData {
+	public var type:BucketDataType;
+	
 	public var gl:GLRenderContext;
 	public var drawMode:Int;
 	public var glLength:Int = 0;
@@ -1300,26 +1408,19 @@ class GLBucketData {
 	public var indices:Array<Int>;
 	public var rawIndices:Bool = false;
 	
-	public var line:GLBucketData;
-	public var destroyed:Bool = false;
+	public var available:Bool = false;
 	
 	public var parent:GLBucket;
 	
-	public function new (gl:GLRenderContext, ?initLine = true) {
+	public function new (gl:GLRenderContext) {
 		this.gl = gl;
 		drawMode = gl.TRIANGLE_STRIP;
 		verts = [];
-		vertsBuffer = gl.createBuffer ();
 		indices = [];
-		indexBuffer = gl.createBuffer ();
-		
-		if(initLine) {
-			line = new GLBucketData(gl, false);
-		}
 	}
 	
-	public function destroy():Void {
-		destroyed = true;
+	public function reset():Void {
+		available = true;
 		verts = [];
 		indices = [];
 		glLength = 0;
@@ -1327,13 +1428,17 @@ class GLBucketData {
 		stride = 0;
 		rawVerts = false;
 		rawIndices = false;
-		if (line != null) line.destroy();
 	}
 	
 	public function upload():Void {
 		
 		// only upload a verts buffer if verts has anything inside
 		if ((rawVerts && glVerts != null && glVerts.length > 0) || verts.length > 0) {
+			
+			if (vertsBuffer == null) {
+				vertsBuffer = gl.createBuffer();
+			}
+			
 			if (!rawVerts) glVerts = new Float32Array (verts);
 			gl.bindBuffer (gl.ARRAY_BUFFER, vertsBuffer);
 			if (glVerts.length <= lastVertsSize) {
@@ -1354,12 +1459,15 @@ class GLBucketData {
 		
 		// only upload a index buffer is there is no length provided and indices has anything inside
 		if (glLength == 0 && ((rawIndices && glIndices != null && glIndices.length > 0) || indices.length > 0)) {
+			
+			if (indexBuffer == null) {
+				indexBuffer = gl.createBuffer ();
+			}
+			
 			if(!rawIndices) glIndices = new UInt16Array (indices);
 			gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 			gl.bufferData (gl.ELEMENT_ARRAY_BUFFER, glIndices, gl.STREAM_DRAW);
 		}
-		
-		if (line != null) line.upload();
 	}
 }
 
@@ -1371,6 +1479,10 @@ enum BucketMode {
 	PatternLine;
 	DrawTriangles;
 	DrawTiles;
+}
+
+enum BucketDataType {
+	Line; Fill;
 }
 
 
