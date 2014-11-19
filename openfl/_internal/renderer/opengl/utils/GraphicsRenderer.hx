@@ -1281,7 +1281,9 @@ class GLBucket {
 				var result:Array<GLBucketData> = [];
 				var tmp:GLBucketData = null;
 				var last:GLBucketData = null;
-				var i:Int = 0;
+				var idx:Int = 0;
+				var vi:Int = 0;
+				var ii:Int = 0;
 				var before = data.length;
 				for (d in data) {
 					if (d.available || d.rawVerts || d.rawIndices) {
@@ -1298,13 +1300,17 @@ class GLBucket {
 					if (last == null || (last.drawMode == d.drawMode)) {
 						if (tmp == null) {
 							tmp = d;
-							//trace(tmp.vertsBuffer, tmp.indexBuffer);
-							i = tmp.indices[tmp.indices.length - 1] + 1;
 						} else {
-							tmp.verts = tmp.verts.concat(d.verts);
-							tmp.indices = tmp.indices.concat(d.indices.map(function(ind) return ind + i));
-							i = tmp.indices[tmp.indices.length - 1] + 1;
+							vi = tmp.verts.length;
+							ii = tmp.indices.length;
+							for (j in 0...d.verts.length) {
+								tmp.verts[j + vi] = d.verts[j];
+							}
+							for (j in 0...d.indices.length) {
+								tmp.indices[j + ii] = d.indices[j] + idx;
+							}
 						}
+						idx = tmp.indices[tmp.indices.length - 1] + 1;
 						last = d;
 					} else {
 						if (tmp != null) {
@@ -1332,7 +1338,7 @@ class GLBucket {
 					//data = result;
 				}
 				
-				trace("Optimized from: " + before + " to: " + result.length);
+				//trace("Optimized from: " + before + " to: " + result.length);
 				
 			}
 		}
