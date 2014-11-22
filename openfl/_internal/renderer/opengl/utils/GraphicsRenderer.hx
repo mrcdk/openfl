@@ -123,32 +123,39 @@ class GraphicsRenderer {
 	}
 	
 	public static function buildComplexPoly (path:DrawPath, glStack:GLStack, localCoords:Bool = false):Void {
-		if (path.points.length < 6) return;
-		var points = path.points.copy();
 		
-		if(localCoords) {
-			for (i in 0...Std.int(points.length / 2)) {
-				points[i * 2] -= objectBounds.x;
-				points[i * 2 + 1] -= objectBounds.y;
+		var bucket:GLBucket = null;
+		
+		if (path.points.length >= 6) {
+			var points = path.points.copy();
+			
+			if(localCoords) {
+				for (i in 0...Std.int(points.length / 2)) {
+					points[i * 2] -= objectBounds.x;
+					points[i * 2 + 1] -= objectBounds.y;
+				}
 			}
-		}
-		
-		
-		var bucket = prepareBucket(path, glStack);
-		var fill = bucket.getData(Fill);
-		fill.drawMode = glStack.gl.TRIANGLE_FAN;
-		fill.verts = points;
-		
-		var indices = fill.indices;
-		var length = Std.int (points.length / 2);
-		for (i in 0...length) {
 			
-			indices.push (i);
 			
+			bucket = prepareBucket(path, glStack);
+			var fill = bucket.getData(Fill);
+			fill.drawMode = glStack.gl.TRIANGLE_FAN;
+			fill.verts = points;
+			
+			var indices = fill.indices;
+			var length = Std.int (points.length / 2);
+			for (i in 0...length) {
+				
+				indices.push (i);
+				
+			}
 		}
 		
 		if (path.line.width > 0) {
 			
+			if (bucket == null) {
+				bucket = prepareBucket(path, glStack);
+			}
 			buildLine (path, bucket, localCoords);
 			
 		}
