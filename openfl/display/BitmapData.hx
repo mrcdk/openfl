@@ -539,6 +539,9 @@ class BitmapData implements IBitmapDrawable {
 				var mainSpritebatch = renderSession.spriteBatch;
 				var mainProjection = renderSession.projection;
 				
+				if (clipRect == null) {
+					clipRect = new Rectangle(0, 0, width, height);
+				}
 				var tmpRect = clipRect.clone();
 				// Flip Y
 				tmpRect.y = height - tmpRect.bottom;
