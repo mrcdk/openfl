@@ -538,6 +538,10 @@ class BitmapData implements IBitmapDrawable {
 				
 				var mainSpritebatch = renderSession.spriteBatch;
 				var mainProjection = renderSession.projection;
+				
+				var tmpRect = clipRect.clone();
+				// Flip Y
+				tmpRect.y = height - tmpRect.bottom;
 
 				var drawSelf = false;
 				if (__spritebatch == null) {
@@ -557,13 +561,13 @@ class BitmapData implements IBitmapDrawable {
 				
 				gl.viewport (0, 0, width, height);
 				
-				__spritebatch.begin(renderSession, drawSelf ? null : clipRect);
+				__spritebatch.begin(renderSession, drawSelf ? null : tmpRect);
 				
 				if (drawSelf) {
 					__framebuffer.clear();
 					this.__renderGL(renderSession);
 					__spritebatch.stop();
-					__spritebatch.start(clipRect);
+					__spritebatch.start(tmpRect);
 				}
 				
 				var matrixCache = source.__worldTransform;

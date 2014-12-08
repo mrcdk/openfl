@@ -140,9 +140,9 @@ class SpriteBatch {
 		} else {
 			gl.enable(gl.SCISSOR_TEST);
 			gl.scissor(Math.floor(clipRect.x), 
-						Math.floor(clipRect.height - clipRect.y),
+						Math.floor(clipRect.y),
 						Math.floor(clipRect.width),
-						Math.floor(clipRect.y + (clipRect.height - clipRect.y))
+						Math.floor(clipRect.height)
 					);
 		}
 		
