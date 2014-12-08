@@ -5,6 +5,7 @@ import lime.graphics.opengl.GLFramebuffer;
 import lime.graphics.opengl.GLRenderbuffer;
 import lime.graphics.opengl.GLTexture;
 import lime.graphics.GLRenderContext;
+import openfl.utils.UInt8Array;
 
 
 class FilterTexture {

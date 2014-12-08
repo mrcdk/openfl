@@ -10,6 +10,8 @@ import lime.graphics.utils.ImageCanvasUtil;
 import lime.math.ColorMatrix;
 import lime.utils.Float32Array;
 import lime.utils.UInt8Array;
+import openfl._internal.renderer.opengl.utils.FilterTexture;
+import openfl._internal.renderer.opengl.utils.SpriteBatch;
 import openfl._internal.renderer.RenderSession;
 import openfl.errors.IOError;
 import openfl.filters.BitmapFilter;
@@ -126,6 +128,7 @@ class BitmapData implements IBitmapDrawable {
 	 */
 	public var width (default, null):Int;
 	
+	@:noCompletion @:dox(hide) public var blendMode:BlendMode;
 	@:noCompletion @:dox(hide) public var __worldTransform:Matrix;
 	
 	@:noCompletion private var __buffer:GLBuffer;
@@ -133,7 +136,10 @@ class BitmapData implements IBitmapDrawable {
 	@:noCompletion private var __isValid:Bool;
 	@:noCompletion private var __texture:GLTexture;
 	@:noCompletion private var __textureImage:Image;
+	@:noCompletion private var __framebuffer:FilterTexture;
 	@:noCompletion private var __uvData:TextureUvs;
+	
+	private var __spritebatch:SpriteBatch;
 	
 	
 	/**
@@ -523,6 +529,68 @@ class BitmapData implements IBitmapDrawable {
 				buffer.__srcContext.setTransform (1, 0, 0, 1, 0, 0);
 				#end
 				
+			case DATA:
+				
+				var renderSession = @:privateAccess Lib.application.stage.__renderer.renderSession;
+				var gl:GLRenderContext = renderSession.gl;
+				if (gl == null) return;
+				
+				
+				var mainSpritebatch = renderSession.spriteBatch;
+				var mainProjection = renderSession.projection;
+
+				var drawSelf = false;
+				if (__spritebatch == null) {
+					__spritebatch = new SpriteBatch(gl);
+					drawSelf = true;
+				}
+				
+				renderSession.spriteBatch = __spritebatch;
+				renderSession.projection = new Point((width / 2), -(height / 2));
+				
+				if (__framebuffer == null) {
+					__framebuffer = new FilterTexture(gl, width, height, smoothing);
+				}
+				
+				__framebuffer.resize(width, height);
+				gl.bindFramebuffer(gl.FRAMEBUFFER, __framebuffer.frameBuffer);
+				
+				gl.viewport (0, 0, width, height);
+				
+				__spritebatch.begin(renderSession, drawSelf ? null : clipRect);
+				
+				if (drawSelf) {
+					__framebuffer.clear();
+					this.__renderGL(renderSession);
+					__spritebatch.stop();
+					__spritebatch.start(clipRect);
+				}
+				
+				var matrixCache = source.__worldTransform;
+				var blendModeCache = source.blendMode;
+				
+				source.__worldTransform = matrix != null ? matrix : new Matrix ();
+				source.blendMode = blendMode;
+				source.__updateChildren (false);
+				
+				source.__renderGL (renderSession);
+				
+				source.__worldTransform = matrixCache;
+				source.blendMode = blendModeCache;
+				source.__updateChildren (true);
+				
+				__spritebatch.end();
+				
+				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+				
+				gl.viewport(0, 0, renderSession.renderer.width, renderSession.renderer.height);
+				
+				renderSession.spriteBatch = mainSpritebatch;
+				renderSession.projection = mainProjection;
+				
+				__texture = __framebuffer.texture;
+				__image.dirty = false;
+				__createUVs(true);
 			default:
 				
 				// TODO
@@ -1419,18 +1487,29 @@ class BitmapData implements IBitmapDrawable {
 	}
 	
 	
-	@:noCompletion private function __createUVs ():Void {
+	@:noCompletion private function __createUVs (?verticalFlip:Bool = false):Void {
 		
 		if (__uvData == null) __uvData = new TextureUvs();
 		
-		__uvData.x0 = 0;
-		__uvData.y0 = 0;
-		__uvData.x1 = 1;
-		__uvData.y1 = 0;
-		__uvData.x2 = 1;
-		__uvData.y2 = 1;
-		__uvData.x3 = 0;
-		__uvData.y3 = 1;
+		if (verticalFlip) {
+			__uvData.x0 = 0;
+			__uvData.y0 = 1;
+			__uvData.x1 = 1;
+			__uvData.y1 = 1;
+			__uvData.x2 = 1;
+			__uvData.y2 = 0;
+			__uvData.x3 = 0;
+			__uvData.y3 = 0;
+		} else {
+			__uvData.x0 = 0;
+			__uvData.y0 = 0;
+			__uvData.x1 = 1;
+			__uvData.y1 = 0;
+			__uvData.x2 = 1;
+			__uvData.y2 = 1;
+			__uvData.x3 = 0;
+			__uvData.y3 = 1;
+		}
 		
 	}
 	
@@ -1553,6 +1632,12 @@ class BitmapData implements IBitmapDrawable {
 		
 	}
 	
+	@:noCompletion @:dox(hide) public function __renderGL (renderSession:RenderSession):Void {
+		
+		if (__worldTransform == null) __worldTransform = new Matrix();
+		renderSession.spriteBatch.render(this, __worldTransform);		
+		
+	}
 	
 	@:noCompletion @:dox(hide) public function __renderMask (renderSession:RenderSession):Void {
 		

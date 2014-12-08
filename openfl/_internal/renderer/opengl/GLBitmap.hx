@@ -97,7 +97,7 @@ class GLBitmap {
     }
     else
     {*/
-        renderSession.spriteBatch.render (bitmap);
+        renderSession.spriteBatch.render (bitmap.bitmapData, bitmap.__worldTransform, 0xFFFFFF, bitmap.__worldAlpha, bitmap.blendMode);
 
         // simple render children!
         //for(i=0,j=this.children.length; i<j; i++)

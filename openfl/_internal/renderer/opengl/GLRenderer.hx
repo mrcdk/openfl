@@ -115,6 +115,9 @@ class GLRenderer extends AbstractRenderer {
 		renderSession.stencilManager = this.stencilManager;
 		renderSession.renderer = this;
 		
+		renderSession.projection = projection;
+		renderSession.offset = offset;
+		
 		gl.useProgram (shaderManager.defaultShader.program);
 		
 		gl.disable (gl.DEPTH_TEST);

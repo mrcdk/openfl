@@ -30,6 +30,8 @@ class SpriteBatch {
 	public var states:Array<State> = [];
 	public var currentState:State;
 	
+	public var clipRect:Rectangle = null;
+	
 	public var currentBaseTexture:GLTexture;
 	public var currentBatchSize:Int;
 	public var currentBlendMode:BlendMode;
@@ -89,12 +91,12 @@ class SpriteBatch {
 	}
 	
 	
-	public function begin (renderSession:RenderSession):Void {
+	public function begin (renderSession:RenderSession, ?clipRect:Rectangle = null):Void {
 		
 		this.renderSession = renderSession;
 		shader = renderSession.shaderManager.defaultShader;
 		drawing = true;
-		start ();
+		start (clipRect);
 		
 	}
 	
@@ -117,6 +119,9 @@ class SpriteBatch {
 	public function end ():Void {
 		
 		flush ();
+		
+		clipRect = null;
+		
 		drawing = false;
 		
 	}
@@ -126,19 +131,30 @@ class SpriteBatch {
 		
 		if (currentBatchSize == 0) return;
 		
-		var gl = this.gl;
-		
 		renderSession.shaderManager.setShader (renderSession.shaderManager.defaultShader);
+		
+		var projection = renderSession.projection;
+		
+		if (clipRect == null) {
+			gl.disable(gl.SCISSOR_TEST);
+		} else {
+			gl.enable(gl.SCISSOR_TEST);
+			gl.scissor(Math.floor(clipRect.x), 
+						Math.floor(clipRect.height - clipRect.y),
+						Math.floor(clipRect.width),
+						Math.floor(clipRect.y + (clipRect.height - clipRect.y))
+					);
+		}
 		
 		if (dirty) {
 			
 			dirty = false;
+			
 			gl.activeTexture (gl.TEXTURE0);
 			
 			gl.bindBuffer (gl.ARRAY_BUFFER, vertexBuffer);
 			gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 			
-			var projection = renderSession.projection;
 			gl.uniform2f (shader.projectionVector, projection.x, projection.y);
 			
 			var stride =  vertSize * 4;
@@ -172,7 +188,7 @@ class SpriteBatch {
 			
 			nextState = states[i];
 			
-			if (currentState.texture != nextState.texture || currentState.blendMode != nextState.blendMode) {
+			if (currentState.compare(nextState)) {
 				
 				renderBatch (currentState, batchSize, start);
 				
@@ -181,9 +197,6 @@ class SpriteBatch {
 				currentState.texture = nextState.texture;
 				currentState.textureSmooth = nextState.textureSmooth;
 				currentState.blendMode = nextState.blendMode;
-				
-				
-				renderSession.blendModeManager.setBlendMode (currentState.blendMode);
 				
 			}
 			
@@ -194,15 +207,18 @@ class SpriteBatch {
 		renderBatch (currentState, batchSize, start);
 		currentBatchSize = 0;
 		
+		//if (clipRect != null) {
+			//gl.disable(gl.SCISSOR_TEST);
+		//}
+		
 	}
 	
 	
-	public function render (sprite:Bitmap):Void {
-		
-		var bitmapData = sprite.bitmapData;
-		var texture = bitmapData.getTexture(gl);
+	public function render (bitmapData:BitmapData, matrix:Matrix, ?tint:Int = 0xFFFFFF, ?alpha:Float = 1, ?blendMode:BlendMode):Void {
 		
 		if (bitmapData == null) return;
+		
+		var texture = bitmapData.getTexture(gl);
 		
 		if (currentBatchSize >= size) {
 			
@@ -214,19 +230,15 @@ class SpriteBatch {
 		var uvs = bitmapData.__uvData;
 		if (uvs == null) return;
 		
-		var alpha = sprite.__worldAlpha;
-		//var tint = sprite.tint;
-		var tint = 0xFFFFFF;
-		
 		//var aX = sprite.anchor.x;
 		var aX = 0;
 		//var aY = sprite.anchor.y;
 		var aY = 0;
 		
 		var index = currentBatchSize * 4 * vertSize;
-		fillVertices(index, aX, aY, bitmapData.width, bitmapData.height, tint, alpha, uvs, sprite.__worldTransform);
+		fillVertices(index, aX, aY, bitmapData.width, bitmapData.height, tint, alpha, uvs, matrix);
 		
-		setState(currentBatchSize, texture, sprite.blendMode);
+		setState(currentBatchSize, texture, blendMode);
 		
 		currentBatchSize++;
 		
@@ -481,10 +493,10 @@ class SpriteBatch {
 		
 	}
 	
-	private function setState(index:Int, texture:GLTexture, smooth:Bool = true, blendMode:BlendMode) {
-		var state:State = states[currentBatchSize];
+	private function setState(index:Int, texture:GLTexture, ?smooth:Bool = true, ?blendMode:BlendMode) {
+		var state:State = states[index];
 		if (state == null) {
-			state = states[currentBatchSize] = new State();
+			state = states[index] = new State();
 		}
 		state.texture = texture;
 		state.textureSmooth = smooth;
@@ -496,10 +508,8 @@ class SpriteBatch {
 		
 		if (size == 0)return;
 		
-		//var gl = this.gl;
+		renderSession.blendModeManager.setBlendMode (state.blendMode);
 		
-		//var tex:GLTexture = /*texture._glTextures[GLRenderer.glContextId];*/ texture.getTexture (gl);
-		//if (tex == null) tex = Texture.createWebGLTexture (texture, gl);
 		gl.bindTexture (gl.TEXTURE_2D, state.texture);
 		
 		if (state.textureSmooth) {
@@ -509,11 +519,6 @@ class SpriteBatch {
 			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);						
 		}
-		/*if (texture._dirty[GLRenderer.glContextId]) {
-			
-			Texture.updateWebGLTexture (currentBaseTexture, gl);
-			
-		}*/
 		
 		gl.drawElements (gl.TRIANGLES, size * 6, gl.UNSIGNED_SHORT, startIndex * 6 * 2);
 		
@@ -637,8 +642,9 @@ class SpriteBatch {
 	}
 	
 	
-	public function start ():Void {
+	public function start (?clipRect:Rectangle = null):Void {
 		
+		this.clipRect = clipRect;
 		dirty = true;
 		
 	}
@@ -660,5 +666,9 @@ private class State {
 	// TODO
 	//public var shader:Dynamic;
 	
-	public function new() {}
+	public function new() { }
+	
+	public inline function compare(other:State) {
+		return texture != other.texture || textureSmooth != other.textureSmooth || blendMode != other.blendMode;
+	}
 }

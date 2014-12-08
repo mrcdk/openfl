@@ -288,6 +288,8 @@ class Application extends LimeApplication {
 		stage = new Stage (window.width, window.height, config.background);
 		stage.addChild (Lib.current);
 		
+		stage.__initRenderer(window.currentRenderer.context);
+		
 	}
 	
 	

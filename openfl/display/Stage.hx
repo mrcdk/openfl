@@ -143,6 +143,40 @@ class Stage extends Sprite {
 		
 	}
 	
+	@:noCompletion private function __initRenderer (context:RenderContext) {
+		
+		switch (context) {
+			
+			case OPENGL (gl):
+				
+				if (__renderer == null) {
+					
+					__renderer = new GLRenderer (stageWidth, stageHeight, gl);
+					
+				}
+			
+			case CANVAS (context):
+				
+				if (__renderer == null) {
+					
+					__renderer = new CanvasRenderer (stageWidth, stageHeight, context);
+					
+				}
+			
+			case DOM (element):
+				
+				if (__renderer == null) {
+					
+					__renderer = new DOMRenderer (stageWidth, stageHeight, element);
+					
+				}
+			
+			default:
+			
+		}
+		
+	}
+	
 	
 	@:noCompletion private function __drag (mouse:Point):Void {
 		
@@ -268,41 +302,9 @@ class Stage extends Sprite {
 		__renderable = true;
 		__update (false, true);
 		
-		switch (context) {
-			
-			case OPENGL (gl):
-				
-				if (__renderer == null) {
-					
-					__renderer = new GLRenderer (stageWidth, stageHeight, gl);
-					
-				}
-				
-				__renderer.render (this);
-			
-			case CANVAS (context):
-				
-				if (__renderer == null) {
-					
-					__renderer = new CanvasRenderer (stageWidth, stageHeight, context);
-					
-				}
-				
-				__renderer.render (this);
-			
-			case DOM (element):
-				
-				if (__renderer == null) {
-					
-					__renderer = new DOMRenderer (stageWidth, stageHeight, element);
-					
-				}
-				
-				__renderer.render (this);
-			
-			default:
-			
-		}
+		__initRenderer (context);
+		
+		__renderer.render (this);
 		
 	}
 	
