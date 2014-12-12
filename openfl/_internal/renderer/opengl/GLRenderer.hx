@@ -38,7 +38,6 @@ class GLRenderer extends AbstractRenderer {
 	public var shaderManager:ShaderManager;
 	public var spriteBatch:SpriteBatch;
 	public var stencilManager:StencilManager;
-	public var transparent:Bool;
 	public var view:Dynamic;
 	
 	private var __stage:Dynamic;

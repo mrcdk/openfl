@@ -804,6 +804,8 @@ class GraphicsRenderer {
 			translationMatrix = object.__worldTransform;
 		}
 		
+		renderSession.blendModeManager.setBlendMode(NORMAL);
+		
 		var batchDrawing = renderSession.spriteBatch.drawing;
 		
 		for (i in 0...glStack.buckets.length) {

@@ -576,6 +576,10 @@ class BitmapData implements IBitmapDrawable {
 				
 				__spritebatch.begin(renderSession, drawSelf ? null : tmpRect);
 				
+				// enable writing to all the colors and alpha
+				gl.colorMask(true, true, true, true);
+				renderSession.blendModeManager.setBlendMode(NORMAL);
+				
 				if (drawSelf) {
 					__framebuffer.clear();
 					this.__renderGL(renderSession);
@@ -604,6 +608,8 @@ class BitmapData implements IBitmapDrawable {
 				
 				renderSession.spriteBatch = mainSpritebatch;
 				renderSession.projection = mainProjection;
+				
+				gl.colorMask(true, true, true, renderSession.renderer.transparent);
 				
 				__texture = __framebuffer.texture;
 				__image.dirty = false;

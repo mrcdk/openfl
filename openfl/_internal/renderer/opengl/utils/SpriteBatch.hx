@@ -207,9 +207,9 @@ class SpriteBatch {
 		renderBatch (currentState, batchSize, start);
 		currentBatchSize = 0;
 		
-		//if (clipRect != null) {
-			//gl.disable(gl.SCISSOR_TEST);
-		//}
+		if (clipRect != null) {
+			gl.disable(gl.SCISSOR_TEST);
+		}
 		
 	}
 	

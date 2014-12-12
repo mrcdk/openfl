@@ -48,7 +48,7 @@ class PatternFillShader extends AbstractShader {
 			'void main(void) {',
 			'   vec2 pos = mix(patternTL, patternBR, vPos);',
 			'   vec4 tcol = texture2D(sampler, pos);',
-			'   gl_FragColor = vec4(tcol.rgb * alpha, tcol.a * alpha);',
+			'   gl_FragColor = tcol * alpha;',
 			'}'
 		];
 		

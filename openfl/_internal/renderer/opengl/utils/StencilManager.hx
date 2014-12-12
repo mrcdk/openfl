@@ -73,7 +73,7 @@ class StencilManager {
 			gl.drawElements (bucketData.drawMode, bucketData.glIndices.length, gl.UNSIGNED_SHORT, 0);
 		}
 		
-		gl.colorMask(true, true, true, true);
+		gl.colorMask(true, true, true, renderSession.renderer.transparent);
 		gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
 		gl.stencilFunc(gl.EQUAL, 0xFF, 0xFF);
 	}
