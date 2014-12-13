@@ -6,6 +6,7 @@ import lime.graphics.opengl.GLTexture;
 import lime.graphics.GLRenderContext;
 import lime.utils.Float32Array;
 import lime.utils.UInt16Array;
+import lime.utils.UInt32Array;
 import openfl._internal.renderer.opengl.shaders.AbstractShader;
 import openfl._internal.renderer.RenderSession;
 import openfl.display.Tilesheet;
@@ -16,6 +17,7 @@ import openfl.display.Bitmap;
 import openfl.display.BitmapData;
 import openfl.display.BlendMode;
 import openfl.geom.Rectangle;
+import openfl.utils.ArrayBuffer;
 
 
 @:access(openfl.display.BitmapData)
@@ -32,32 +34,41 @@ class SpriteBatch {
 	
 	public var clipRect:Rectangle = null;
 	
-	public var currentBaseTexture:GLTexture;
+	public var vertexBuffer:GLBuffer;
+	public var vertices:ArrayBuffer;
+	public var positions:Float32Array;
+	public var colors:UInt32Array;
+	
+	public var indexBuffer:GLBuffer;
+	public var indices:UInt16Array;
+	
+	public var size:Int;
+	public var vertSize:Int;
+	
 	public var currentBatchSize:Int;
 	public var currentBlendMode:BlendMode;
 	public var dirty:Bool;
 	public var drawing:Bool;
 	public var gl:GLRenderContext;
-	public var indexBuffer:GLBuffer;
-	public var indices:UInt16Array;
+
 	public var lastIndexCount:Int;
 	public var renderSession:RenderSession;
 	public var shader:AbstractShader;
-	public var size:Int;
-	public var vertexBuffer:GLBuffer;
-	public var vertices:Float32Array;
-	public var vertSize:Int;
 	
 	
 	public function new (gl:GLRenderContext) {
 		
-		vertSize = 6;
-		size = Math.floor(Math.pow(2, 16) /  this.vertSize);
+		vertSize = 5;
+		//size = Math.floor(Math.pow(2, 16) /  this.vertSize);
+		size = 2000;
 		
-		var numVerts = size * 4 * vertSize;
+		var numVerts = size * 4 * 4 * vertSize;
 		var numIndices = size * 6;
 		
-		vertices = new Float32Array (numVerts);
+		vertices = new ArrayBuffer (numVerts);
+		positions = new Float32Array(vertices);
+		colors = new UInt32Array(vertices);
+		
 		indices = new UInt16Array (numIndices);
 		
 		lastIndexCount = 0;
@@ -80,7 +91,6 @@ class SpriteBatch {
 		
 		drawing = false;
 		currentBatchSize = 0;
-		currentBaseTexture = null;
 		
 		setContext (gl);
 		
@@ -109,7 +119,10 @@ class SpriteBatch {
 		gl.deleteBuffer (vertexBuffer);
 		gl.deleteBuffer (indexBuffer);
 		
-		currentBaseTexture = null;
+		state.destroy();
+		for (state in states) {
+			state.destroy();
+		}
 		
 		gl = null;
 		
@@ -160,17 +173,17 @@ class SpriteBatch {
 			var stride =  vertSize * 4;
 			gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
 			gl.vertexAttribPointer (shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
-			gl.vertexAttribPointer (shader.colorAttribute, 2, gl.FLOAT, false, stride, 4 * 4);
+			gl.vertexAttribPointer (shader.colorAttribute, 4, gl.UNSIGNED_BYTE, true, stride, 4 * 4);
 			
 		}
 		
 		if (currentBatchSize > (size * 0.5)) {
 			
-			gl.bufferSubData (gl.ARRAY_BUFFER, 0, vertices);
+			gl.bufferSubData (gl.ARRAY_BUFFER, 0, positions);
 			
 		} else {
 			
-			var view = vertices.subarray (0, currentBatchSize * 4 * vertSize);
+			var view = positions.subarray (0, currentBatchSize * 4 * vertSize);
 			gl.bufferSubData (gl.ARRAY_BUFFER, 0, view);
 			
 		}
@@ -223,7 +236,6 @@ class SpriteBatch {
 		if (currentBatchSize >= size) {
 			
 			flush ();
-			currentState.texture = texture;
 			
 		}
 		
@@ -235,8 +247,10 @@ class SpriteBatch {
 		//var aY = sprite.anchor.y;
 		var aY = 0;
 		
+		var color = ((Std.int(alpha * 255)) & 0xFF) << 24 | (tint & 0xFF) << 16 | ((tint >> 8) & 0xFF) << 8 | ((tint >> 16) & 0xFF);
+		
 		var index = currentBatchSize * 4 * vertSize;
-		fillVertices(index, aX, aY, bitmapData.width, bitmapData.height, tint, alpha, uvs, matrix);
+		fillVertices(index, aX, aY, bitmapData.width, bitmapData.height, color, uvs, matrix);
 		
 		setState(currentBatchSize, texture, blendMode);
 		
@@ -252,7 +266,6 @@ class SpriteBatch {
 		if (currentBatchSize >= size) {
 			
 			flush ();
-			currentBaseTexture = cachedTexture.texture;
 			
 		}
 		
@@ -272,7 +285,8 @@ class SpriteBatch {
 		var worldTransform = object.__worldTransform.clone();
 		worldTransform.__translateTransformed(new Point(object.__graphics.__bounds.x, object.__graphics.__bounds.y));
 		
-		fillVertices(index, aX, aY, cachedTexture.width, cachedTexture.height, tint, alpha, uvs, worldTransform);
+		var color = ((Std.int(alpha * 255)) & 0xFF) << 24 | (tint & 0xFF) << 16 | ((tint >> 8) & 0xFF) << 8 | ((tint >> 16) & 0xFF);
+		fillVertices(index, aX, aY, cachedTexture.width, cachedTexture.height, color, uvs, worldTransform);
 
 		setState(currentBatchSize, cachedTexture.texture, object.blendMode);
 		
@@ -326,7 +340,7 @@ class SpriteBatch {
 		var tileUV:Rectangle = sheet.__rectUV;
 		var center:Point = sheet.__point;
 		var x = 0.0, y = 0.0;
-		var alpha = 1.0, tint = 0xFFFFFF;
+		var alpha = 1.0, tint = 0xFFFFFF, color = 0xFFFFFFFF;
 		var scale = 1.0, rotation = 0.0;
 		var cosTheta = 1.0, sinTheta = 0.0;
 		var a = 0.0, b = 0.0, c = 0.0, d = 0.0, tx = 0.0, ty = 0.0;
@@ -341,7 +355,6 @@ class SpriteBatch {
 			
 			if (currentBatchSize >= size) {
 				flush ();
-				currentBaseTexture = texture;
 			}
 			
 			x = tileData[iIndex + 0];
@@ -431,7 +444,9 @@ class SpriteBatch {
 				
 				bIndex = currentBatchSize * 4 * vertSize;
 				
-				fillVertices(bIndex, 0, 0, rect.width, rect.height, tint, alpha, uvs, matrix);
+				color = ((Std.int(alpha * 255)) & 0xFF) << 24 | (tint & 0xFF) << 16 | ((tint >> 8) & 0xFF) << 8 | ((tint >> 16) & 0xFF);
+				
+				fillVertices(bIndex, 0, 0, rect.width, rect.height, color, uvs, matrix);
 				
 				setState(currentBatchSize, texture, smooth, blendMode);
 				
@@ -446,7 +461,7 @@ class SpriteBatch {
 	private inline function fillVertices(index:Int,
 										aX:Float, aY:Float,
 										width:Float, height:Float,
-										tint:Int, alpha:Float,
+										color:Int,
 										uvs:TextureUvs,
 										matrix:Matrix) {
 
@@ -463,37 +478,33 @@ class SpriteBatch {
 		var tx = matrix.tx;
 		var ty = matrix.ty;
 		
-		vertices[index++] = (a * w1 + c * h1 + tx);
-		vertices[index++] = (d * h1 + b * w1 + ty);
-		vertices[index++] = uvs.x0;
-		vertices[index++] = uvs.y0;
-		vertices[index++] = alpha;
-		vertices[index++] = tint;
+		positions[index++] = (a * w1 + c * h1 + tx);
+		positions[index++] = (d * h1 + b * w1 + ty);
+		positions[index++] = uvs.x0;
+		positions[index++] = uvs.y0;
+		colors[index++] = color;
 		
-		vertices[index++] = (a * w0 + c * h1 + tx);
-		vertices[index++] = (d * h1 + b * w0 + ty);
-		vertices[index++] = uvs.x1;
-		vertices[index++] = uvs.y1;
-		vertices[index++] = alpha;
-		vertices[index++] = tint;
+		positions[index++] = (a * w0 + c * h1 + tx);
+		positions[index++] = (d * h1 + b * w0 + ty);
+		positions[index++] = uvs.x1;
+		positions[index++] = uvs.y1;
+		colors[index++] = color;
 		
-		vertices[index++] = (a * w0 + c * h0 + tx);
-		vertices[index++] = (d * h0 + b * w0 + ty);
-		vertices[index++] = uvs.x2;
-		vertices[index++] = uvs.y2;
-		vertices[index++] = alpha;
-		vertices[index++] = tint;
+		positions[index++] = (a * w0 + c * h0 + tx);
+		positions[index++] = (d * h0 + b * w0 + ty);
+		positions[index++] = uvs.x2;
+		positions[index++] = uvs.y2;
+		colors[index++] = color;
 		
-		vertices[index++] = (a * w1 + c * h0 + tx);
-		vertices[index++] = (d * h0 + b * w1 + ty);
-		vertices[index++] = uvs.x3;
-		vertices[index++] = uvs.y3;
-		vertices[index++] = alpha;
-		vertices[index++] = tint;
+		positions[index++] = (a * w1 + c * h0 + tx);
+		positions[index++] = (d * h0 + b * w1 + ty);
+		positions[index++] = uvs.x3;
+		positions[index++] = uvs.y3;
+		colors[index++] = color;
 		
 	}
 	
-	private function setState(index:Int, texture:GLTexture, ?smooth:Bool = true, ?blendMode:BlendMode) {
+	private function setState(index:Int, texture:GLTexture, ?smooth:Bool = false, ?blendMode:BlendMode) {
 		var state:State = states[index];
 		if (state == null) {
 			state = states[index] = new State();
@@ -635,7 +646,7 @@ class SpriteBatch {
 		gl.bufferData (gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 		
 		gl.bindBuffer (gl.ARRAY_BUFFER, vertexBuffer);
-		gl.bufferData (gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+		gl.bufferData (gl.ARRAY_BUFFER, positions, gl.DYNAMIC_DRAW);
 		
 		currentBlendMode = null;
 		
@@ -670,5 +681,9 @@ private class State {
 	
 	public inline function compare(other:State) {
 		return texture != other.texture || textureSmooth != other.textureSmooth || blendMode != other.blendMode;
+	}
+	
+	public function destroy() {
+		texture = null;
 	}
 }
