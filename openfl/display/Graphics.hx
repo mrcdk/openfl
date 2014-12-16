@@ -52,6 +52,7 @@ class Graphics {
 	@:noCompletion private var __halfStrokeWidth:Float;
 	@:noCompletion private var __positionX:Float;
 	@:noCompletion private var __positionY:Float;
+	@:noCompletion private var __transformDirty:Bool;
 	@:noCompletion private var __visible:Bool = true;
 	@:noCompletion private var __cachedTexture:FilterTexture;
 	
@@ -225,6 +226,7 @@ class Graphics {
 		if (__bounds != null) {
 			
 			__dirty = true;
+			__transformDirty = true;
 			__bounds = null;
 			
 		}
@@ -242,6 +244,7 @@ class Graphics {
 		__halfStrokeWidth = sourceGraphics.__halfStrokeWidth;
 		__positionX = sourceGraphics.__positionX;
 		__positionY = sourceGraphics.__positionY;
+		__transformDirty = true;
 		__visible = sourceGraphics.__visible;
 		
 	}
@@ -512,9 +515,6 @@ class Graphics {
 	public function drawRoundRect (x:Float, y:Float, width:Float, height:Float, rx:Float, ry:Float = -1):Void {
 		
 		if (width <= 0 || height <= 0) return;
-		if (rx > width / 2) rx = width / 2;
-		if (ry > height / 2) ry = height / 2;
-		if (ry < 0) ry = rx;
 		
 		__inflateBounds (x - __halfStrokeWidth, y - __halfStrokeWidth);
 		__inflateBounds (x + width + __halfStrokeWidth, y + height + __halfStrokeWidth);
@@ -953,6 +953,7 @@ class Graphics {
 		if (__bounds == null) {
 			
 			__bounds = new Rectangle (x, y, 0, 0);
+			__transformDirty = true;
 			return;
 			
 		}
@@ -961,6 +962,7 @@ class Graphics {
 			
 			__bounds.width += __bounds.x - x;
 			__bounds.x = x;
+			__transformDirty = true;
 			
 		}
 		
@@ -968,6 +970,7 @@ class Graphics {
 			
 			__bounds.height += __bounds.y - y;
 			__bounds.y = y;
+			__transformDirty = true;
 			
 		}
 		

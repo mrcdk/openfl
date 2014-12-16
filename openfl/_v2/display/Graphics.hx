@@ -1,4 +1,4 @@
-package openfl._v2.display;
+package openfl._v2.display; #if (!flash && !html5 && !openfl_next)
 
 
 import openfl.display.GradientType;
@@ -78,6 +78,13 @@ class Graphics {
 	public function copyFrom (sourceGraphics:Graphics):Void {
 		
 		openfl.Lib.notImplemented ("Graphics.copyFrom");
+		
+	}
+	
+	
+	public function cubicCurveTo (controlX1:Float, controlY1:Float, controlX2:Float, controlY2:Float, anchorX:Float, anchorY:Float):Void {
+		
+		openfl.Lib.notImplemented ("Graphics.cubicCurveTo");
 		
 	}
 	
@@ -269,3 +276,6 @@ class Graphics {
 	
 	
 }
+
+
+#end
