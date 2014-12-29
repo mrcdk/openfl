@@ -11,7 +11,7 @@ import lime.math.ColorMatrix;
 import lime.utils.Float32Array;
 import lime.utils.UInt8Array;
 import openfl._internal.renderer.opengl.utils.FilterTexture;
-import openfl._internal.renderer.opengl.utils.SpriteBatch;
+import openfl._internal.renderer.opengl.utils.SpriteBatch2;
 import openfl._internal.renderer.RenderSession;
 import openfl.errors.IOError;
 import openfl.filters.BitmapFilter;
@@ -130,6 +130,7 @@ class BitmapData implements IBitmapDrawable {
 	
 	@:noCompletion @:dox(hide) public var blendMode:BlendMode;
 	@:noCompletion @:dox(hide) public var __worldTransform:Matrix;
+	@:noCompletion @:dox(hide) public var __worldColorTransform:ColorTransform;
 	
 	@:noCompletion private var __buffer:GLBuffer;
 	@:noCompletion private var __image:Image;
@@ -139,7 +140,7 @@ class BitmapData implements IBitmapDrawable {
 	@:noCompletion private var __framebuffer:FilterTexture;
 	@:noCompletion private var __uvData:TextureUvs;
 	
-	private var __spritebatch:SpriteBatch;
+	private var __spritebatch:SpriteBatch2;
 	
 	
 	/**
@@ -546,7 +547,7 @@ class BitmapData implements IBitmapDrawable {
 				if (gl == null) return;
 				
 				
-				var mainSpritebatch = renderSession.spriteBatch;
+				var mainSpritebatch = renderSession.spriteBatch2;
 				var mainProjection = renderSession.projection;
 				
 				if (clipRect == null) {
@@ -558,11 +559,11 @@ class BitmapData implements IBitmapDrawable {
 
 				var drawSelf = false;
 				if (__spritebatch == null) {
-					__spritebatch = new SpriteBatch(gl);
+					__spritebatch = new SpriteBatch2(gl);
 					drawSelf = true;
 				}
 				
-				renderSession.spriteBatch = __spritebatch;
+				renderSession.spriteBatch2 = __spritebatch;
 				renderSession.projection = new Point((width / 2), -(height / 2));
 				
 				if (__framebuffer == null) {
@@ -606,7 +607,7 @@ class BitmapData implements IBitmapDrawable {
 				
 				gl.viewport(0, 0, renderSession.renderer.width, renderSession.renderer.height);
 				
-				renderSession.spriteBatch = mainSpritebatch;
+				renderSession.spriteBatch2 = mainSpritebatch;
 				renderSession.projection = mainProjection;
 				
 				gl.colorMask(true, true, true, renderSession.renderer.transparent);
@@ -1673,7 +1674,8 @@ class BitmapData implements IBitmapDrawable {
 	@:noCompletion @:dox(hide) public function __renderGL (renderSession:RenderSession):Void {
 		
 		if (__worldTransform == null) __worldTransform = new Matrix();
-		renderSession.spriteBatch.render(this, __worldTransform);		
+		if (__worldColorTransform == null) __worldColorTransform = new ColorTransform();
+		renderSession.spriteBatch.render(this, __worldTransform);
 		
 	}
 	

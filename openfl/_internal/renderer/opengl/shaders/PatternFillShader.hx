@@ -12,6 +12,7 @@ class PatternFillShader extends AbstractShader {
 	public var patternBR:GLUniformLocation;
 	public var sampler:GLUniformLocation;
 	public var alpha:GLUniformLocation;
+	public var colorOffsets:GLUniformLocation;
 	
 	public function new(gl:GLRenderContext) {
 		super(gl);
@@ -41,6 +42,7 @@ class PatternFillShader extends AbstractShader {
 			'uniform float alpha;',
 			'uniform vec2 patternTL;',
 			'uniform vec2 patternBR;',
+			'uniform vec4 colorOffsets;',
 			'uniform sampler2D sampler;',
 			
 			'varying vec2 vPos;',
@@ -48,7 +50,7 @@ class PatternFillShader extends AbstractShader {
 			'void main(void) {',
 			'   vec2 pos = mix(patternTL, patternBR, vPos);',
 			'   vec4 tcol = texture2D(sampler, pos);',
-			'   gl_FragColor = tcol * alpha;',
+			'   gl_FragColor = (tcol * alpha) + colorOffsets;',
 			'}'
 		];
 		
@@ -69,6 +71,7 @@ class PatternFillShader extends AbstractShader {
 		patternBR = gl.getUniformLocation (program, 'patternBR');
 		sampler = gl.getUniformLocation (program, 'sampler');
 		alpha = gl.getUniformLocation (program, 'alpha');
+		colorOffsets = gl.getUniformLocation (program, 'colorOffsets');
 		
 		aVertexPosition = gl.getAttribLocation (program, 'aVertexPosition');
 		

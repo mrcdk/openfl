@@ -9,6 +9,7 @@ class FillShader extends AbstractShader {
 	public var translationMatrix:GLUniformLocation;
 	public var alpha:GLUniformLocation;
 	public var color:GLUniformLocation;
+	public var colorOffsets:GLUniformLocation;
 	
 	public function new(gl:GLRenderContext) {
 		super(gl);
@@ -20,6 +21,7 @@ class FillShader extends AbstractShader {
 			'uniform vec2 offsetVector;',
 			'uniform vec3 color;',
 			'uniform float alpha;',
+			'uniform vec4 colorOffsets;',
 			
 			'varying vec4 vColor;',
 			
@@ -27,7 +29,7 @@ class FillShader extends AbstractShader {
 			'   vec3 v = translationMatrix * vec3(aVertexPosition , 1.0);',
 			'   v -= offsetVector.xyx;',
 			'   gl_Position = vec4( v.x / projectionVector.x -1.0, v.y / -projectionVector.y + 1.0 , 0.0, 1.0);',
-			'   vColor = vec4(color * alpha, alpha);',
+			'   vColor = vec4(color * alpha, alpha) + colorOffsets;',
 			'}'
 
 		];
@@ -57,6 +59,7 @@ class FillShader extends AbstractShader {
 		
 		color = gl.getUniformLocation (program, 'color');
 		alpha = gl.getUniformLocation (program, 'alpha');
+		colorOffsets = gl.getUniformLocation (program, 'colorOffsets');
 		
 		aVertexPosition = gl.getAttribLocation (program, 'aVertexPosition');
 		

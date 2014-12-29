@@ -6,8 +6,9 @@ import lime.graphics.opengl.GLFramebuffer;
 import lime.graphics.GLRenderContext;
 import lime.utils.Float32Array;
 import lime.utils.UInt16Array;
-import openfl._internal.renderer.opengl.shaders.AbstractShader;
-import openfl._internal.renderer.opengl.shaders.DefaultShader;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.Attrib in DefAttrib;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.Uniform in DefUniform;
 import openfl._internal.renderer.RenderSession;
 import openfl.geom.Rectangle;
 
@@ -51,7 +52,7 @@ class FilterManager {
 	
 	public function applyFilterPass (filter:Dynamic, filterArea:Rectangle, width:Int, height:Int):Void {
 		
-		var gl = this.gl;
+		/*var gl = this.gl;
 		var shader:DefaultShader = cast filter.shaders[GLRenderer.glContextId];
 		
 		if (shader == null) {
@@ -59,13 +60,13 @@ class FilterManager {
 			shader = new DefaultShader (gl);
 			shader.fragmentSrc = filter.fragmentSrc;
 			shader.uniforms = filter.uniforms;
-			shader.init ();
+			//shader.init ();
 			
 			filter.shaders[GLRenderer.glContextId] = shader;
 			
 		}
 		
-		renderSession.shaderManager.setShader (shader);
+		renderSession.shaderManager2.setShader (shader);
 		
 		gl.uniform2f (shader.projectionVector, width / 2, -height / 2);
 		gl.uniform2f (shader.offsetVector, 0, 0);
@@ -93,7 +94,7 @@ class FilterManager {
 		gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 		
 		gl.drawElements (gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
-		renderSession.drawCount++;
+		renderSession.drawCount++;*/
 		
 	}
 	
@@ -101,7 +102,7 @@ class FilterManager {
 	public function begin (renderSession:RenderSession, buffer:GLFramebuffer = null):Void {
 		
 		this.renderSession = renderSession;
-		defaultShader = renderSession.shaderManager.defaultShader;
+		defaultShader = renderSession.shaderManager2.defaultShader;
 		
 		var projection = renderSession.projection;
 		
@@ -169,7 +170,7 @@ class FilterManager {
 	
 	public function popFilter ():Void {
 		
-		var gl = this.gl;
+		/*var gl = this.gl;
 		var filterBlock = filterStack.pop();
 		var filterArea:Rectangle = filterBlock._filterArea;
 		var texture = filterBlock._glFilterTexture;
@@ -314,19 +315,19 @@ class FilterManager {
 		
 		applyFilterPass (filter, filterArea, sizeX, sizeY);
 		
-		renderSession.shaderManager.setShader (defaultShader);
+		renderSession.shaderManager2.setShader (defaultShader);
 		gl.uniform2f (defaultShader.projectionVector, sizeX / 2, -sizeY / 2);
 		gl.uniform2f (defaultShader.offsetVector, -offsetX, -offsetY);
 		
 		texturePool.push (texture);
 		filterBlock._glFilterTexture = null;
-		
+		*/
 	}
 	
 	
 	public function pushFilter (filterBlock:Dynamic):Void {
 		
-		var gl = this.gl;
+		/*var gl = this.gl;
 		
 		var projection = renderSession.projection;
 		var offset =  renderSession.offset;
@@ -385,7 +386,7 @@ class FilterManager {
 		offset.x = -filterArea.x;
 		offset.y = -filterArea.y;
 		
-		renderSession.shaderManager.setShader (defaultShader);
+		renderSession.shaderManager2.setShader (defaultShader);
 		gl.uniform2f (defaultShader.projectionVector, filterArea.width / 2, -filterArea.height / 2);
 		gl.uniform2f (defaultShader.offsetVector, -filterArea.x, -filterArea.y);
 		
@@ -394,7 +395,7 @@ class FilterManager {
 		gl.clear (gl.COLOR_BUFFER_BIT);
 		
 		filterBlock._glFilterTexture = texture;
-		
+		*/
 	}
 	
 	

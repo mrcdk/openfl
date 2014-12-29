@@ -2,6 +2,7 @@ package openfl.display; #if !flash #if (display || openfl_next || js)
 
 
 import openfl._internal.renderer.RenderSession;
+import openfl.geom.ColorTransform;
 import openfl.geom.Matrix;
 import openfl.geom.Transform;
 
@@ -9,6 +10,7 @@ import openfl.geom.Transform;
 interface IBitmapDrawable {
 	
 	var __worldTransform:Matrix;
+	var __worldColorTransform:ColorTransform;
 	var blendMode:BlendMode;
 	
 	

@@ -13,12 +13,14 @@ class DefaultShader extends AbstractShader {
 		'attribute vec2 aVertexPosition;',
 		'attribute vec2 aTextureCoord;',
 		'attribute vec4 aColor;',
+		'attribute vec4 aColorOffsets;',
 		
 		'uniform vec2 projectionVector;',
 		'uniform vec2 offsetVector;',
 		
 		'varying vec2 vTextureCoord;',
 		'varying vec4 vColor;',
+		'varying vec4 vColorOffsets;',
 		
 		'const vec2 center = vec2(-1.0, 1.0);',
 		
@@ -26,6 +28,7 @@ class DefaultShader extends AbstractShader {
 		'   gl_Position = vec4( ((aVertexPosition + offsetVector) / projectionVector) + center , 0.0, 1.0);',
 		'   vTextureCoord = aTextureCoord;',
 		'   vColor = vec4(aColor.rgb * aColor.a, aColor.a);',
+		'   vColorOffsets = aColorOffsets / 255.;',
 		'}'
 	];
 	
@@ -45,9 +48,10 @@ class DefaultShader extends AbstractShader {
 			#end
 			'varying vec2 vTextureCoord;',
 			'varying vec4 vColor;',
+			'varying vec4 vColorOffsets;',
 			'uniform sampler2D uSampler;',
 			'void main(void) {',
-			'   gl_FragColor = texture2D(uSampler, vTextureCoord) * vColor ;',
+			'   gl_FragColor = (texture2D(uSampler, vTextureCoord) * vColor) + vColorOffsets;',
 			'}'
 		];
 		
@@ -80,13 +84,9 @@ class DefaultShader extends AbstractShader {
 		aTextureCoord = gl.getAttribLocation (program, 'aTextureCoord');
 		colorAttribute = gl.getAttribLocation (program, 'aColor');
 		
-		if (colorAttribute == -1) {
-			
-			colorAttribute = 2;
-			
-		}
+		aColorOffset = gl.getAttribLocation (program, 'aColorOffsets');
 		
-		attributes = [ aVertexPosition, aTextureCoord, colorAttribute ];
+		attributes = [ aVertexPosition, aTextureCoord, colorAttribute, aColorOffset ];
 		
 		if (uniforms != null) {
 			

@@ -24,6 +24,7 @@ import js.html.Element;
 
 @:access(openfl.events.Event)
 @:access(openfl.display.Stage)
+@:access(openfl.geom.ColorTransform)
 
 
 /**
@@ -698,6 +699,8 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	public var y (get, set):Float;
 	
 	@:dox(hide) @:noCompletion public var __worldTransform:Matrix;
+	@:dox(hide) @:noCompletion public var __worldColorTransform:ColorTransform;
+	
 	
 	@:noCompletion private var __alpha:Float;
 	@:noCompletion private var __filters:Array<BitmapFilter>;
@@ -754,6 +757,8 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 		__rotationCache = 0;
 		__rotationSine = 0;
 		__rotationCosine = 1;
+		
+		__worldColorTransform = new ColorTransform ();
 		
 		#if dom
 		__worldVisible = true;
@@ -1206,11 +1211,14 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			var worldClip:Rectangle = null;
 			#end
 			
+			__worldColorTransform = transform.colorTransform.__clone();
+			
 			if (parent != null) {
 				
 				#if !dom
 				
 				__worldAlpha = alpha * parent.__worldAlpha;
+				__worldColorTransform.__combine(parent.__worldColorTransform);
 				
 				#else
 				

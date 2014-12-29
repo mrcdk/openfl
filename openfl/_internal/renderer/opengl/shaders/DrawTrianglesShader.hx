@@ -11,6 +11,7 @@ class DrawTrianglesShader extends AbstractShader {
 	public var patternBR:GLUniformLocation;
 	public var sampler:GLUniformLocation;
 	public var color:GLUniformLocation;
+	public var colorOffsets:GLUniformLocation;
 	public var useTexture:GLUniformLocation;
 	public var alpha:GLUniformLocation;
 	
@@ -47,6 +48,7 @@ class DrawTrianglesShader extends AbstractShader {
 			'uniform vec3 color;',
 			'uniform bool useTexture;',
 			'uniform float alpha;',
+			'uniform vec4 colorOffsets;',
 			
 			'varying vec2 vPos;',
 			'varying vec4 vColor;',
@@ -60,7 +62,7 @@ class DrawTrianglesShader extends AbstractShader {
 			'       tmp = vec4(color, 1.);',
 			'   }',
 			'   float a = tmp.a * vColor.a * alpha;',
-			'   gl_FragColor = vec4(vec3((tmp.rgb * vColor.rgb) * a), a);',
+			'   gl_FragColor = vec4(vec3((tmp.rgb * vColor.rgb) * a), a) + colorOffsets;',
 			'}'
 		];
 		
@@ -80,6 +82,7 @@ class DrawTrianglesShader extends AbstractShader {
 		alpha = gl.getUniformLocation (program, 'alpha');
 		
 		color = gl.getUniformLocation (program, 'color');
+		colorOffsets = gl.getUniformLocation (program, 'colorOffsets');
 		useTexture = gl.getUniformLocation (program, 'useTexture');
 		
 		aVertexPosition = gl.getAttribLocation (program, 'aVertexPosition');

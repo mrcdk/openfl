@@ -15,6 +15,7 @@ class AbstractShader {
 	public var aTextureCoord:Int;
 	public var aVertexPosition:Int;
 	public var colorAttribute:Int;
+	public var aColorOffset:Int;
 	public var fragmentSrc:Array<String>;
 	public var gl:GLRenderContext;
 	public var program:GLProgram;

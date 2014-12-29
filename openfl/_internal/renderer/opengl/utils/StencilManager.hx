@@ -4,6 +4,7 @@ package openfl._internal.renderer.opengl.utils;
 import lime.graphics.GLRenderContext;
 import lime.utils.Float32Array;
 import openfl._internal.renderer.opengl.shaders.AbstractShader;
+import openfl._internal.renderer.opengl.shaders2.FillShader;
 import openfl._internal.renderer.opengl.utils.GraphicsRenderer;
 import openfl._internal.renderer.RenderSession;
 import openfl.geom.Matrix;
@@ -38,12 +39,12 @@ class StencilManager {
 	
 	public inline function prepareGraphics(bucketData:GLBucketData, renderSession:RenderSession, projection:Point, translationMatrix:Float32Array):Void {
 		var offset = renderSession.offset;
-		var shader = renderSession.shaderManager.fillShader;
+		var shader = renderSession.shaderManager2.fillShader;
 		
-		renderSession.shaderManager.setShader (shader);
-		gl.uniformMatrix3fv (shader.translationMatrix, false, translationMatrix);
-		gl.uniform2f (shader.projectionVector, projection.x, -projection.y);
-		gl.uniform2f (shader.offsetVector, -offset.x, -offset.y);
+		renderSession.shaderManager2.setShader (shader);
+		gl.uniformMatrix3fv (shader.getUniformLocation(FillShader.Uniform.TranslationMatrix), false, translationMatrix);
+		gl.uniform2f (shader.getUniformLocation(FillShader.Uniform.ProjectionVector), projection.x, -projection.y);
+		gl.uniform2f (shader.getUniformLocation(FillShader.Uniform.OffsetVector), -offset.x, -offset.y);
 			
 		gl.bindBuffer (gl.ARRAY_BUFFER, bucketData.vertsBuffer);
 		gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, 4 * 2, 0);
@@ -94,8 +95,8 @@ class StencilManager {
 
 		if (glData.mode == RenderMode.STENCIL) {
 			
-			var shader = renderSession.shaderManager.complexPrimitiveShader;
-			renderSession.shaderManager.setShader (shader);
+			var shader = renderSession.shaderManager2.complexPrimitiveShader;
+			renderSession.shaderManager2.setShader (shader);
 			
 			gl.uniformMatrix3fv (shader.translationMatrix, false, object.__worldTransform.toArray (true));
 			
@@ -116,8 +117,8 @@ class StencilManager {
 			
 		} else {
 			
-			var shader = renderSession.shaderManager.primitiveShader;
-			renderSession.shaderManager.setShader (shader);
+			var shader = renderSession.shaderManager2.primitiveShader;
+			renderSession.shaderManager2.setShader (shader);
 			
 			gl.uniformMatrix3fv (shader.translationMatrix, false, object.__worldTransform.toArray (true));
 			

@@ -21,6 +21,7 @@ import openfl.display.JointStyle;
 import openfl.display.LineScaleMode;
 import openfl.display.TriangleCulling;
 import openfl.display.Tilesheet;
+import openfl.geom.ColorTransform;
 import openfl.geom.Matrix;
 import openfl.geom.Point;
 import openfl.geom.Rectangle;
@@ -1037,6 +1038,9 @@ class GraphicsRenderer {
 		gl.uniform2f (shader.offsetVector, -offset.x, -offset.y);
 		gl.uniform1f (shader.alpha, object.__worldAlpha * bucket.alpha);
 		
+		var ct:ColorTransform = object.transform.colorTransform;
+		gl.uniform4f (shader.colorOffsets, ct.redOffset / 255, ct.greenOffset / 255, ct.blueOffset / 255, ct.alphaOffset / 255);
+		
 		// specific uniforms
 		switch(bucket.mode) {
 			case Fill:
@@ -1093,7 +1097,7 @@ class GraphicsRenderer {
 	
 	private static inline function renderDrawTiles(object:DisplayObject, bucket:GLBucket, renderSession:RenderSession) {
 		var args = Type.enumParameters(bucket.graphicType);		
-		renderSession.spriteBatch.renderTiles(object, cast args[0], cast args[1], cast args[2], cast args[3], cast args[4]);
+		renderSession.spriteBatch2.renderTiles(object, cast args[0], cast args[1], cast args[2], cast args[3], cast args[4]);
 	}
 	
 	private static function bindDrawTrianglesBuffer(gl:GLRenderContext, shader:DrawTrianglesShader, data:GLBucketData) {
