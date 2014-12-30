@@ -12,6 +12,7 @@ class ShaderManager2 {
 	public var fillShader:FillShader;
 	public var patternFillShader:PatternFillShader;
 	public var drawTrianglesShader:DrawTrianglesShader;
+	public var primitiveShader:PrimitiveShader;
 	
 	public function new(gl:GLRenderContext) {
 		setContext(gl);
@@ -24,6 +25,7 @@ class ShaderManager2 {
 		fillShader = new FillShader(gl);
 		patternFillShader = new PatternFillShader(gl);
 		drawTrianglesShader = new DrawTrianglesShader(gl);
+		primitiveShader = new PrimitiveShader(gl);
 		
 		setShader(defaultShader, true);
 		
@@ -35,6 +37,7 @@ class ShaderManager2 {
 		fillShader.destroy();
 		patternFillShader.destroy();
 		drawTrianglesShader.destroy();
+		primitiveShader.destroy();
 		
 		gl = null;
 		

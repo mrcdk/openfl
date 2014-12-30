@@ -601,7 +601,7 @@ class BitmapData implements IBitmapDrawable {
 				source.blendMode = blendModeCache;
 				source.__updateChildren (true);
 				
-				__spritebatch.end();
+				__spritebatch.finish();
 				
 				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 				
@@ -1675,7 +1675,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (__worldTransform == null) __worldTransform = new Matrix();
 		if (__worldColorTransform == null) __worldColorTransform = new ColorTransform();
-		renderSession.spriteBatch.render(this, __worldTransform);
+		renderSession.spriteBatch2.renderBitmapData(this, __worldTransform, __worldColorTransform);
 		
 	}
 	

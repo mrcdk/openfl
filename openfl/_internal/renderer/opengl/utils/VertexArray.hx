@@ -9,23 +9,23 @@ import openfl.utils.ArrayBufferView;
 class VertexArray {
 
 	public var gl:GLRenderContext;
-	public var glBuffer(default, null):GLBuffer;
+	public var glBuffer:GLBuffer;
 	public var attributes:Array<VertexAttribute> = [];
-	public var buffer(default, null):ArrayBuffer;
-	public var size(default, null):Int = 0;
+	public var buffer:ArrayBuffer;
+	public var size:Int = 0;
 	public var stride(get, never):Int;
 
 	public var isStatic:Bool = false;
 	
-	public function new(gl:GLRenderContext, size:Int, attributes:Array<VertexAttribute>, isStatic:Bool = false) {
+	public function new(attributes:Array<VertexAttribute>, ?size:Int = 0, isStatic:Bool = false) {
 		this.size = size;
 		this.attributes = attributes;
 		
-		buffer = new ArrayBuffer(size);
+		if(size > 0) {
+			buffer = new ArrayBuffer(size);
+		}
 		
 		this.isStatic = isStatic;
-		
-		//setContext(gl, new Float32Array(buffer));
 	}
 	
 	public inline function bind() {

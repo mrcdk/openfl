@@ -1,6 +1,8 @@
 package openfl._internal.renderer.opengl.shaders2;
 
 import lime.graphics.GLRenderContext;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefAttrib;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefUniform;
 
 class PatternFillShader extends Shader {
 
@@ -68,17 +70,22 @@ class PatternFillShader extends Shader {
 }
 
 @:enum private abstract Attrib(String) to String from String {
-	var Position = "aPosition";
+	var Position = DefAttrib.Position;
 }
 
 @:enum private abstract Uniform(String) from String to String {
 	var TranslationMatrix = "uTranslationMatrix";
 	var PatternMatrix = "uPatternMatrix";
-	var ProjectionVector = "uProjectionVector";
-	var OffsetVector = "uOffsetVector";
-	var Sampler = "uSampler0";
 	var PatternTL = "uPatternTL";
 	var PatternBR = "uPatternBR";
-	var Alpha = "uAlpha";
-	var ColorOffset = "uColorOffset";
+	var Sampler = DefUniform.Sampler;
+	var ProjectionVector = DefUniform.ProjectionVector;
+	var OffsetVector = DefUniform.OffsetVector;
+	var Color = DefUniform.Color;
+	var Alpha = DefUniform.Alpha;
+	var ColorOffset = DefUniform.ColorOffset;
+	
 }
+
+typedef PatternFillAttrib = Attrib;
+typedef PatternFillUniform = Uniform;

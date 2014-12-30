@@ -1,6 +1,8 @@
 package openfl._internal.renderer.opengl.shaders2;
 
 import lime.graphics.GLRenderContext;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefAttrib;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefUniform;
 
 class FillShader extends Shader {
 
@@ -13,10 +15,17 @@ class FillShader extends Shader {
 			'uniform vec2 ${Uniform.ProjectionVector};',
 			'uniform vec2 ${Uniform.OffsetVector};',
 			
+			'uniform vec4 ${Uniform.Color};',
+			'uniform float ${Uniform.Alpha};',
+			'uniform vec4 ${Uniform.ColorOffset};',
+			
+			'varying vec4 vColor;',
+			
 			'void main(void) {',
 			'   vec3 v = ${Uniform.TranslationMatrix} * vec3(${Uniform.ProjectionVector} , 1.0);',
 			'   v -= ${Uniform.OffsetVector}.xyx;',
 			'   gl_Position = vec4( v.x / ${Uniform.ProjectionVector}.x -1.0, v.y / - ${Uniform.ProjectionVector}.y + 1.0 , 0.0, 1.0);',
+			'   vColor = (${Uniform.Color} * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
 			'}'
 
 		];
@@ -26,10 +35,10 @@ class FillShader extends Shader {
 			'precision lowp float;',
 			'#endif',
 			
-			'uniform vec4 ${Uniform.Color};',
+			'varying vec4 vColor;',
 			
 			'void main(void) {',
-			'   gl_FragColor = ${Uniform.Color};',
+			'   gl_FragColor = vColor;',
 			'}'
 		];
 		
@@ -49,12 +58,17 @@ class FillShader extends Shader {
 }
 
 @:enum private abstract Attrib(String) from String to String {
-	var Position = "aPosition";
+	var Position = DefAttrib.Position;
 }
 
 @:enum private abstract Uniform(String) from String to String {
 	var TranslationMatrix = "uTranslationMatrix";
-	var ProjectionVector = "uProjectionVector";
-	var OffsetVector = "uOffsetVector";
-	var Color = "uColor";
+	var ProjectionVector = DefUniform.ProjectionVector;
+	var OffsetVector = DefUniform.OffsetVector;
+	var Color = DefUniform.Color;
+	var Alpha = DefUniform.Alpha;
+	var ColorOffset = DefUniform.ColorOffset;
 }
+
+typedef FillAttrib = Attrib;
+typedef FillUniform = Uniform;

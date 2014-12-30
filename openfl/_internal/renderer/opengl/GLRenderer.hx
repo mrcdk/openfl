@@ -210,7 +210,7 @@ class GLRenderer extends AbstractRenderer {
 		glContextId++;
 		
 		shaderManager2.setContext (gl);
-		spriteBatch.setContext (gl);
+		spriteBatch2.setContext (gl);
 		maskManager.setContext (gl);
 		filterManager.setContext (gl);
 		

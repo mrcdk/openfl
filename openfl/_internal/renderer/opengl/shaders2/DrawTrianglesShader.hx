@@ -1,6 +1,8 @@
 package openfl._internal.renderer.opengl.shaders2;
 
 import lime.graphics.GLRenderContext;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefAttrib;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefUniform;
 
 
 class DrawTrianglesShader extends Shader {
@@ -79,17 +81,21 @@ class DrawTrianglesShader extends Shader {
 }
 
 @:enum private abstract Attrib(String) from String to String {
-	var Position = "aPosition";
-	var TexCoord = "aTexCoord0";
-	var Color = "aColor";
+	var Position = DefAttrib.Position;
+	var TexCoord = DefAttrib.TexCoord;
+	var Color = DefAttrib.Color;
 }
 
 @:enum private abstract Uniform(String) from String to String {
-	var Sampler = "uSampler0";
-	var ProjectionVector = "uProjectionVector";
-	var OffsetVector = "uOffsetVector";
-	var Color = "uColor";
-	var Alpha = "uAlpha";
+	var Sampler = DefUniform.Sampler;
+	var ProjectionVector = DefUniform.ProjectionVector;
+	var OffsetVector = DefUniform.OffsetVector;
+	var Color = DefUniform.Color;
+	var Alpha = DefUniform.Alpha;
+	var ColorOffset = DefUniform.ColorOffset;
 	var UseTexture = "uUseTexture";
-	var ColorOffset = "uColorOffset";
+	
 }
+
+typedef DrawTrianglesAttrib = Attrib;
+typedef DrawTrianglesUniform = Uniform;

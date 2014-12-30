@@ -1,10 +1,9 @@
 package openfl._internal.renderer.opengl.utils;
 
 import lime.graphics.GLRenderContext;
-import openfl._internal.renderer.opengl.shaders2.DefaultShader;
-import openfl._internal.renderer.opengl.shaders2.DefaultShader.Attrib in DefAttrib;
-import openfl._internal.renderer.opengl.shaders2.DefaultShader.Uniform in DefUniform;
-import openfl._internal.renderer.opengl.shaders2.Shader;
+import openfl._internal.renderer.opengl.shaders2.*;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefAttrib;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefUniform;
 import openfl._internal.renderer.opengl.utils.VertexAttribute;
 import openfl._internal.renderer.RenderSession;
 import openfl.display.BitmapData;
@@ -85,7 +84,7 @@ class SpriteBatch2 {
 		vertexArraySize = maxSprites * maxElementsPerVertex * VERTS_PER_SPRITE * 4;
 		indexArraySize = maxSprites * 6;
 		
-		vertexArray = new VertexArray(gl, vertexArraySize, attributes, false);
+		vertexArray = new VertexArray(attributes, vertexArraySize, false);
 		positions = new Float32Array(vertexArray.buffer);
 		colors = new UInt32Array(vertexArray.buffer);
 		colorOffsets = new Int16Array(vertexArray.buffer);

@@ -6,10 +6,19 @@ import lime.graphics.opengl.GLBuffer;
 import lime.graphics.GLRenderContext;
 import lime.utils.Float32Array;
 import lime.utils.UInt16Array;
-import openfl._internal.renderer.opengl.shaders.DrawTrianglesShader;
-import openfl._internal.renderer.opengl.shaders.FillShader;
+import lime.utils.UInt32Array;
+import openfl._internal.renderer.opengl.shaders2.*;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefUniform;
+import openfl._internal.renderer.opengl.shaders2.DrawTrianglesShader.DrawTrianglesAttrib;
+import openfl._internal.renderer.opengl.shaders2.DrawTrianglesShader.DrawTrianglesUniform;
+import openfl._internal.renderer.opengl.shaders2.FillShader.FillAttrib;
+import openfl._internal.renderer.opengl.shaders2.FillShader.FillUniform;
+import openfl._internal.renderer.opengl.shaders2.PatternFillShader.PatternFillUniform;
+import openfl._internal.renderer.opengl.shaders2.PrimitiveShader.PrimitiveAttrib;
+import openfl._internal.renderer.opengl.shaders2.PrimitiveShader.PrimitiveUniform;
 import openfl._internal.renderer.opengl.utils.GraphicsRenderer.GLBucketData;
 import openfl._internal.renderer.opengl.utils.GraphicsRenderer.RenderMode;
+import openfl._internal.renderer.opengl.utils.VertexAttribute.ElementType;
 import openfl._internal.renderer.RenderSession;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
@@ -35,9 +44,20 @@ import openfl.Vector;
 @:access(openfl.display.BitmapData)
 @:access(openfl.geom.Matrix)
 
-
 class GraphicsRenderer {
 	
+	public static var fillVertexAttributes = [
+		new VertexAttribute(2, ElementType.FLOAT, false, FillAttrib.Position),
+	];
+	public static var drawTrianglesVertexAttributes = [
+		new VertexAttribute(2, ElementType.FLOAT, false, DrawTrianglesAttrib.Position),
+		new VertexAttribute(2, ElementType.FLOAT, false, DrawTrianglesAttrib.TexCoord),
+		new VertexAttribute(4, ElementType.UNSIGNED_BYTE, true, DrawTrianglesAttrib.Color),
+	];
+	public static var primitiveVertexAttributes = [
+		new VertexAttribute(2, ElementType.FLOAT, false, PrimitiveAttrib.Position),
+		new VertexAttribute(4, ElementType.UNSIGNED_BYTE, true, PrimitiveAttrib.Color),
+	];
 	
 	public static var graphicsDataPool:Array<GLGraphicsData> = [];
 	public static var bucketPool:Array<GLBucket> = [];
@@ -608,9 +628,13 @@ class GraphicsRenderer {
 		
 		var bucket = prepareBucket(path, glStack);
 		var fill = bucket.getData(Fill);
+		var colorAttrib = fill.vertexArray.attributes[2];
+		colorAttrib.enabled = hasColors;
+		colorAttrib.defaultValue = new Float32Array([1, 1, 1, 1]);
+		
 		fill.rawVerts = true;
 		fill.glLength = indices.length;
-		fill.stride = 8;
+		fill.stride = Std.int(fill.vertexArray.stride / 4);
 		
 		var vertsLength = fill.glLength * fill.stride;
 		var verts:Float32Array;
@@ -622,6 +646,8 @@ class GraphicsRenderer {
 			verts = fill.glVerts;
 		}
 		
+		var glColors = new UInt32Array(verts.buffer);
+		
 		var v0 = 0; var v1 = 0; var v2 = 0;
 		var i0 = 0; var i1 = 0; var i2 = 0;
 		
@@ -630,8 +656,6 @@ class GraphicsRenderer {
 		var x2 = 0.0; var y2 = 0.0;
 		
 		var idx = 0;
-		var color = hex2rgba(0xFFFFFFFF);
-		var ctmp = color;
 		for (i in 0...Std.int(indices.length / 3)) {
 			
 			i0 = indices[i * 3]; i1 = indices[i * 3 + 1]; i2 = indices[i * 3 + 2];	
@@ -663,34 +687,16 @@ class GraphicsRenderer {
 			verts[idx++] = uvtData[v0];
 			verts[idx++] = uvtData[v0 + 1];
 			if (hasColors) {
-				ctmp = hex2rgba(colors[i0]);
-				verts[idx++] = ctmp[0];
-				verts[idx++] = ctmp[1];
-				verts[idx++] = ctmp[2];
-				verts[idx++] = ctmp[3];
-			} else {
-				verts[idx++] = color[0];
-				verts[idx++] = color[1];
-				verts[idx++] = color[2];
-				verts[idx++] = color[3];
+				// TODO Color isn't right seems to be brga
+				glColors[idx++] = colors[i0];
 			}
-			
 			
 			verts[idx++] = a * x1 + c * y1 + tx;
 			verts[idx++] = b * x1 + d * y1 + ty;
 			verts[idx++] = uvtData[v1];
 			verts[idx++] = uvtData[v1 + 1];
 			if (hasColors) {
-				ctmp = hex2rgba(colors[i1]);
-				verts[idx++] = ctmp[0];
-				verts[idx++] = ctmp[1];
-				verts[idx++] = ctmp[2];
-				verts[idx++] = ctmp[3];
-			} else {
-				verts[idx++] = color[0];
-				verts[idx++] = color[1];
-				verts[idx++] = color[2];
-				verts[idx++] = color[3];
+				glColors[idx++] = colors[i1];
 			}
 			
 			verts[idx++] = a * x2 + c * y2 + tx;
@@ -698,16 +704,7 @@ class GraphicsRenderer {
 			verts[idx++] = uvtData[v2];
 			verts[idx++] = uvtData[v2 + 1];
 			if (hasColors) {
-				ctmp = hex2rgba(colors[i2]);
-				verts[idx++] = ctmp[0];
-				verts[idx++] = ctmp[1];
-				verts[idx++] = ctmp[2];
-				verts[idx++] = ctmp[3];
-			} else {
-				verts[idx++] = color[0];
-				verts[idx++] = color[1];
-				verts[idx++] = color[2];
-				verts[idx++] = color[3];
+				glColors[idx++] = colors[i2];
 			}
 			
 		}
@@ -755,7 +752,7 @@ class GraphicsRenderer {
 	
 	public static function render (object:DisplayObject, renderSession:RenderSession):Void {
 		var graphics = object.__graphics;
-		var spritebatch = renderSession.spriteBatch;
+		var spritebatch = renderSession.spriteBatch2;
 		var dirty = graphics.__dirty;
 		if (graphics.__commands.length <= 0) {
 			return;
@@ -821,15 +818,15 @@ class GraphicsRenderer {
 		
 		renderSession.blendModeManager.setBlendMode(NORMAL);
 		
-		var batchDrawing = renderSession.spriteBatch.drawing;
+		var batchDrawing = renderSession.spriteBatch2.drawing;
 		
 		for (i in 0...glStack.buckets.length) {
-			batchDrawing = renderSession.spriteBatch.drawing;
+			batchDrawing = renderSession.spriteBatch2.drawing;
 			bucket = glStack.buckets[i];
 			switch(bucket.mode) {
 				case Fill, PatternFill:
 					if (batchDrawing && !localCoords) {
-						renderSession.spriteBatch.end();
+						renderSession.spriteBatch2.finish();
 					}
 					renderSession.stencilManager.pushBucket(bucket, renderSession, projection, translationMatrix.toArray(true));
 					var shader = prepareShader(bucket, renderSession, object, projection, translationMatrix.toArray(false));
@@ -837,13 +834,13 @@ class GraphicsRenderer {
 					renderSession.stencilManager.popBucket(object, bucket, renderSession);
 				case DrawTriangles:
 					if (batchDrawing && !localCoords) {
-						renderSession.spriteBatch.end();
+						renderSession.spriteBatch2.finish();
 					}
 					var shader = prepareShader(bucket, renderSession, object, projection, null);
 					renderDrawTriangles(bucket, cast shader, renderSession);
 				case DrawTiles:
 					if (!batchDrawing) {
-						renderSession.spriteBatch.begin(renderSession);
+						renderSession.spriteBatch2.begin(renderSession);
 					}
 					renderDrawTiles(object, bucket, renderSession);
 				case _:
@@ -851,32 +848,29 @@ class GraphicsRenderer {
 			
 			for (line in bucket.lines) {
 				if (line != null && line.verts.length > 0) {
-					batchDrawing = renderSession.spriteBatch.drawing;
+					batchDrawing = renderSession.spriteBatch2.drawing;
 					if (batchDrawing && !localCoords) {
-						renderSession.spriteBatch.end();
+						renderSession.spriteBatch2.finish();
 					}
-					var shader = renderSession.shaderManager.primitiveShader;
+					var shader = renderSession.shaderManager2.primitiveShader;
 				
-					renderSession.shaderManager.setShader (shader);
+					renderSession.shaderManager2.setShader (shader);
 					
-					gl.uniformMatrix3fv (shader.translationMatrix, false, translationMatrix.toArray(true));
-					gl.uniform2f (shader.projectionVector, projection.x, -projection.y);
-					gl.uniform2f (shader.offsetVector, -offset.x, -offset.y);
-					gl.uniform1f (shader.alpha, object.__worldAlpha);
+					gl.uniformMatrix3fv (shader.getUniformLocation(PrimitiveUniform.TranslationMatrix), false, translationMatrix.toArray(true));
+					gl.uniform2f (shader.getUniformLocation(PrimitiveUniform.ProjectionVector), projection.x, -projection.y);
+					gl.uniform2f (shader.getUniformLocation(PrimitiveUniform.OffsetVector), -offset.x, -offset.y);
 					
-					gl.bindBuffer (gl.ARRAY_BUFFER, line.vertsBuffer);
-
-					gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, 4 * 6, 0);
-					gl.vertexAttribPointer (shader.colorAttribute, 4, gl.FLOAT, false, 4 * 6, 2 * 4);
+					line.vertexArray.bind();
+					shader.bindVertexArray(line.vertexArray);
 					
 					gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, line.indexBuffer);
 					gl.drawElements (gl.TRIANGLE_STRIP, line.indices.length, gl.UNSIGNED_SHORT, 0);
 				}
 			}
 			
-			batchDrawing = renderSession.spriteBatch.drawing;
+			batchDrawing = renderSession.spriteBatch2.drawing;
 			if (!batchDrawing && !localCoords) {
-				renderSession.spriteBatch.begin(renderSession);
+				renderSession.spriteBatch2.begin(renderSession);
 			}
 		}
 	}
@@ -941,7 +935,7 @@ class GraphicsRenderer {
 			case Color(c, a):
 				bucket = switchBucket(path.fillIndex, glStack, Fill);
 				bucket.color = hex2rgb(c);
-				bucket.alpha = a;
+				bucket.color[3] = a;
 				bucket.uploadTileBuffer = true;
 				
 			case Texture(b, m, r, s):
@@ -1029,22 +1023,22 @@ class GraphicsRenderer {
 	private static function prepareShader(bucket:GLBucket, renderSession:RenderSession, object:DisplayObject, projection:Point, translationMatrix:Float32Array) {
 		var gl = renderSession.gl;
 		var offset = renderSession.offset;
-		var shader:Dynamic =  null;
+		var shader:Shader =  null;
 		
 		shader = switch(bucket.mode) {
 			case Fill:
-				renderSession.shaderManager.fillShader;
+				renderSession.shaderManager2.fillShader;
 			case PatternFill:
-				renderSession.shaderManager.patternFillShader;
+				renderSession.shaderManager2.patternFillShader;
 			case DrawTriangles:
-				renderSession.shaderManager.drawTrianglesShader;
+				renderSession.shaderManager2.drawTrianglesShader;
 			case _:
 				null;
 		}
 		
 		if (shader == null) return null;
 		
-		var newShader = renderSession.shaderManager.setShader(shader);
+		var newShader = renderSession.shaderManager2.setShader(shader);
 		
 		//if (!newShader && lastBucketMode == bucket.mode) {
 			//return shader;
@@ -1053,31 +1047,30 @@ class GraphicsRenderer {
 		//lastBucketMode = bucket.mode;
 		
 		// common uniforms
-		gl.uniform2f (shader.projectionVector, projection.x, -projection.y);
-		gl.uniform2f (shader.offsetVector, -offset.x, -offset.y);
-		gl.uniform1f (shader.alpha, object.__worldAlpha * bucket.alpha);
+		gl.uniform2f (shader.getUniformLocation(DefUniform.ProjectionVector), projection.x, -projection.y);
+		gl.uniform2f (shader.getUniformLocation(DefUniform.OffsetVector), -offset.x, -offset.y);
+		gl.uniform1f (shader.getUniformLocation(DefUniform.Alpha), object.__worldAlpha);
 		
 		var ct:ColorTransform = object.transform.colorTransform;
-		gl.uniform4f (shader.colorOffsets, ct.redOffset / 255, ct.greenOffset / 255, ct.blueOffset / 255, ct.alphaOffset / 255);
-		
+		gl.uniform4f (shader.getUniformLocation(FillUniform.ColorOffset), ct.redOffset / 255, ct.greenOffset / 255, ct.blueOffset / 255, ct.alphaOffset / 255);
+
 		// specific uniforms
 		switch(bucket.mode) {
 			case Fill:
-				gl.uniformMatrix3fv (shader.translationMatrix, false, translationMatrix);
-				gl.uniform3fv (shader.color, new Float32Array (bucket.color));
+				gl.uniformMatrix3fv (shader.getUniformLocation(FillUniform.TranslationMatrix), false, translationMatrix);
+				gl.uniform3fv (shader.getUniformLocation(FillUniform.Color), new Float32Array (bucket.color));
 			case PatternFill:
-				gl.uniformMatrix3fv (shader.translationMatrix, false, translationMatrix);		
-				gl.uniform1i(shader.sampler, 0);
-				gl.uniform2f(shader.patternTL, bucket.textureTL.x, bucket.textureTL.y);
-				gl.uniform2f(shader.patternBR, bucket.textureBR.x, bucket.textureBR.y);
-				gl.uniformMatrix3fv(shader.patternMatrix, false, bucket.textureMatrix.toArray(false));
+				gl.uniformMatrix3fv (shader.getUniformLocation(PatternFillUniform.TranslationMatrix), false, translationMatrix);
+				gl.uniform2f(shader.getUniformLocation(PatternFillUniform.PatternTL), bucket.textureTL.x, bucket.textureTL.y);
+				gl.uniform2f(shader.getUniformLocation(PatternFillUniform.PatternBR), bucket.textureBR.x, bucket.textureBR.y);
+				gl.uniformMatrix3fv(shader.getUniformLocation(PatternFillUniform.PatternMatrix), false, bucket.textureMatrix.toArray(false));
 			case DrawTriangles:
+				gl.uniform2f (shader.getUniformLocation(DrawTrianglesUniform.ProjectionVector), projection.x, projection.y);
 				if (bucket.texture != null) {
-					gl.uniform1i(shader.useTexture, 1);
-					gl.uniform1i(shader.sampler, 0);
+					gl.uniform1i(shader.getUniformLocation(DrawTrianglesUniform.UseTexture), 1);
 				} else {
-					gl.uniform1i(shader.useTexture, 0);
-					gl.uniform3fv(shader.color, new Float32Array (bucket.color));
+					gl.uniform1i(shader.getUniformLocation(DrawTrianglesUniform.UseTexture), 0);
+					gl.uniform3fv(shader.getUniformLocation(DrawTrianglesUniform.Color), new Float32Array (bucket.color));
 				}
 			case _:
 		}
@@ -1125,11 +1118,12 @@ class GraphicsRenderer {
 		//} 
 		//lastVertsBuffer = data.vertsBuffer;
 		
-		gl.bindBuffer (gl.ARRAY_BUFFER, fill.vertsBuffer);
-		var stride =  fill.stride * 4;
-		gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
-		gl.vertexAttribPointer (shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
-		gl.vertexAttribPointer (shader.colorAttribute, 4, gl.FLOAT, false, stride, 4 * 4);
+		fill.vertexArray.bind();
+		shader.bindVertexArray(fill.vertexArray);
+		//var stride =  fill.stride * 4;
+		//gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
+		//gl.vertexAttribPointer (shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
+		//gl.vertexAttribPointer (shader.colorAttribute, 4, gl.FLOAT, false, stride, 4 * 4);
 	}
 	
 	private static function bindTexture(gl:GLRenderContext, bucket:GLBucket) {
@@ -1165,7 +1159,7 @@ class GraphicsRenderer {
 	}
 	
 	public static inline function hex2rgb (hex:Null<Int>):Array<Float> {
-		return hex == null ? [0,0,0] : [(hex >> 16 & 0xFF) / 255, ( hex >> 8 & 0xFF) / 255, (hex & 0xFF) / 255];
+		return hex == null ? [1,1,1] : [(hex >> 16 & 0xFF) / 255, ( hex >> 8 & 0xFF) / 255, (hex & 0xFF) / 255];
 	}
 	
 	public static inline function hex2rgba (hex:Null<Int>):Array<Float> {
@@ -1277,6 +1271,16 @@ class GLBucket {
 		
 		if(remove) data.remove(result);
 		data.push(result);
+		
+		switch(mode) {
+			case Fill, PatternFill:
+				result.vertexArray.attributes = GraphicsRenderer.fillVertexAttributes;
+			case DrawTriangles:
+				result.vertexArray.attributes = GraphicsRenderer.drawTrianglesVertexAttributes;
+			case Line, PatternLine:
+				result.vertexArray.attributes = GraphicsRenderer.primitiveVertexAttributes;
+			case _:
+		}
 		
 		return result;
 	}
@@ -1416,9 +1420,9 @@ class GLBucketData {
 	public var glLength:Int = 0;
 	public var glStart:Int = 0;
 	
-	public var vertsBuffer:GLBuffer;
-	public var lastVertsSize:Int = 0;
+	public var vertexArray:VertexArray;
 	public var glVerts:Float32Array;
+	public var lastVertsSize:Int = 0;
 	public var verts:Array<Float>;
 	public var rawVerts:Bool = false;
 	public var stride:Int = 0;
@@ -1437,6 +1441,7 @@ class GLBucketData {
 		drawMode = gl.TRIANGLE_STRIP;
 		verts = [];
 		indices = [];
+		vertexArray = new VertexArray([]);
 	}
 	
 	public function reset():Void {
@@ -1455,23 +1460,21 @@ class GLBucketData {
 		// only upload a verts buffer if verts has anything inside
 		if ((rawVerts && glVerts != null && glVerts.length > 0) || verts.length > 0) {
 			
-			if (vertsBuffer == null) {
-				vertsBuffer = gl.createBuffer();
-			}
-			
 			if (!rawVerts) glVerts = new Float32Array (verts);
-			gl.bindBuffer (gl.ARRAY_BUFFER, vertsBuffer);
+			
+			vertexArray.buffer = glVerts.buffer;
+			
 			if (glVerts.length <= lastVertsSize) {
+				vertexArray.bind();
 				var end = glLength * 4 * stride;
 				if (glLength > 0 && lastVertsSize > end) {
 					var view = glVerts.subarray(0, end);
-					gl.bufferSubData(gl.ARRAY_BUFFER, 0, view);
-					view = null;
+					vertexArray.upload(view);
 				} else {
-					gl.bufferSubData(gl.ARRAY_BUFFER, 0, glVerts);
+					vertexArray.upload(glVerts);
 				}
 			} else {
-				gl.bufferData (gl.ARRAY_BUFFER, glVerts, gl.STREAM_DRAW);
+				vertexArray.setContext(gl, glVerts);
 				lastVertsSize = glVerts.length;
 			}
 			

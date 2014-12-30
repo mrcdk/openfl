@@ -6,9 +6,7 @@ import lime.graphics.opengl.GLFramebuffer;
 import lime.graphics.GLRenderContext;
 import lime.utils.Float32Array;
 import lime.utils.UInt16Array;
-import openfl._internal.renderer.opengl.shaders2.DefaultShader;
-import openfl._internal.renderer.opengl.shaders2.DefaultShader.Attrib in DefAttrib;
-import openfl._internal.renderer.opengl.shaders2.DefaultShader.Uniform in DefUniform;
+import openfl._internal.renderer.opengl.shaders2.*;
 import openfl._internal.renderer.RenderSession;
 import openfl.geom.Rectangle;
 

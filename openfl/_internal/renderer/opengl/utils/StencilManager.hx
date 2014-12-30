@@ -3,8 +3,8 @@ package openfl._internal.renderer.opengl.utils;
 
 import lime.graphics.GLRenderContext;
 import lime.utils.Float32Array;
-import openfl._internal.renderer.opengl.shaders.AbstractShader;
-import openfl._internal.renderer.opengl.shaders2.FillShader;
+import openfl._internal.renderer.opengl.shaders2.*;
+import openfl._internal.renderer.opengl.shaders2.FillShader.FillUniform;
 import openfl._internal.renderer.opengl.utils.GraphicsRenderer;
 import openfl._internal.renderer.RenderSession;
 import openfl.geom.Matrix;
@@ -42,12 +42,12 @@ class StencilManager {
 		var shader = renderSession.shaderManager2.fillShader;
 		
 		renderSession.shaderManager2.setShader (shader);
-		gl.uniformMatrix3fv (shader.getUniformLocation(FillShader.Uniform.TranslationMatrix), false, translationMatrix);
-		gl.uniform2f (shader.getUniformLocation(FillShader.Uniform.ProjectionVector), projection.x, -projection.y);
-		gl.uniform2f (shader.getUniformLocation(FillShader.Uniform.OffsetVector), -offset.x, -offset.y);
+		gl.uniformMatrix3fv (shader.getUniformLocation(FillUniform.TranslationMatrix), false, translationMatrix);
+		gl.uniform2f (shader.getUniformLocation(FillUniform.ProjectionVector), projection.x, -projection.y);
+		gl.uniform2f (shader.getUniformLocation(FillUniform.OffsetVector), -offset.x, -offset.y);
 			
-		gl.bindBuffer (gl.ARRAY_BUFFER, fill.vertsBuffer);
-		gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, 4 * 2, 0);
+		fill.vertexArray.bind();
+		shader.bindVertexArray(fill.vertexArray);
 		gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, fill.indexBuffer);
 	}
 	
@@ -88,7 +88,7 @@ class StencilManager {
 	
 	public function bindGraphics (object:DisplayObject, glData:GLGraphicsData, renderSession:RenderSession):Void {
 		
-		var graphics = object.__graphics;
+		/*var graphics = object.__graphics;
 		
 		var projection = renderSession.projection;
 		var offset = renderSession.offset;
@@ -137,7 +137,7 @@ class StencilManager {
 			
 			gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, glData.indexBuffer);
 			
-		}
+		}*/
 		
 	}
 	

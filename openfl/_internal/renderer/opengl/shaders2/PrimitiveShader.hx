@@ -1,6 +1,8 @@
 package openfl._internal.renderer.opengl.shaders2;
 
 import lime.graphics.GLRenderContext;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefAttrib;
+import openfl._internal.renderer.opengl.shaders2.DefaultShader.DefUniform;
 
 class PrimitiveShader extends Shader {
 
@@ -10,9 +12,12 @@ class PrimitiveShader extends Shader {
 		vertexSrc  = [
 			'attribute vec2 ${Attrib.Position};',
 			'attribute vec4 ${Attrib.Color};',
+			
 			'uniform mat3 ${Uniform.TranslationMatrix};',
 			'uniform vec2 ${Uniform.ProjectionVector};',
 			'uniform vec2 ${Uniform.OffsetVector};',
+			'uniform vec4 ${Uniform.ColorOffset};',
+			'uniform float ${Uniform.Alpha};',
 			
 			'varying vec4 vColor;',
 			
@@ -20,7 +25,7 @@ class PrimitiveShader extends Shader {
 			'   vec3 v = ${Uniform.TranslationMatrix} * vec3(${Attrib.Position} , 1.0);',
 			'   v -= ${Uniform.OffsetVector}.xyx;',
 			'   gl_Position = vec4( v.x / ${Uniform.ProjectionVector}.x -1.0, v.y / -${Uniform.ProjectionVector}.y + 1.0 , 0.0, 1.0);',
-			'   vColor = ${Attrib.Color};',
+			'   vColor = (${Attrib.Color} * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
 			'}'
 		];
 		
@@ -53,12 +58,18 @@ class PrimitiveShader extends Shader {
 }
 
 @:enum private abstract Attrib(String) to String from String {
-	var Position = "aPosition";
-	var Color = "aColor";
+	var Position = DefAttrib.Position;
+	var Color = DefAttrib.Color;
 }
 
 @:enum private abstract Uniform(String) from String to String {
 	var TranslationMatrix = "uTranslationMatrix";
-	var ProjectionVector = "uProjectionVector";
-	var OffsetVector = "uOffsetVector";
+	var ProjectionVector = DefUniform.ProjectionVector;
+	var OffsetVector = DefUniform.OffsetVector;
+	var Color = DefUniform.Color;
+	var Alpha = DefUniform.Alpha;
+	var ColorOffset = DefUniform.ColorOffset;
 }
+
+typedef PrimitiveAttrib =  Attrib;
+typedef PrimitiveUniform =  Uniform;
