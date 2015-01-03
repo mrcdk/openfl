@@ -3,11 +3,11 @@ package openfl.geom; #if !flash #if (display || openfl_next || js)
 
 import openfl.display.DisplayObject;
 
-
+@:access(openfl.geom.ColorTransform)
 class Transform {
 	
 	
-	public var colorTransform:ColorTransform;
+	public var colorTransform(default, set):ColorTransform;
 	public var concatenatedColorTransform:ColorTransform;
 	public var concatenatedMatrix:Matrix;
 	public var matrix (get, set):Matrix;
@@ -34,7 +34,9 @@ class Transform {
 	
 	// Get & Set Methods
 	
-	
+	@:noCompletion private function set_colorTransform(v:ColorTransform) {
+		return colorTransform = v == null ? null : v.__clone();
+	}
 	
 	
 	@:noCompletion private function get_matrix ():Matrix {

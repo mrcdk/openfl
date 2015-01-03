@@ -182,6 +182,7 @@ class GraphicsRenderer {
 	}
 	
 	public static function buildLine (path:DrawPath, bucket:GLBucket, localCoords:Bool = false):Void {
+		// TODO Fix lines, the color isn't right and makes the line to break
 		var points = path.points;
 		if (points.length == 0) return;
 		
@@ -687,7 +688,6 @@ class GraphicsRenderer {
 			verts[idx++] = uvtData[v0];
 			verts[idx++] = uvtData[v0 + 1];
 			if (hasColors) {
-				// TODO Color isn't right seems to be brga
 				glColors[idx++] = colors[i0];
 			}
 			
@@ -859,6 +859,7 @@ class GraphicsRenderer {
 					gl.uniformMatrix3fv (shader.getUniformLocation(PrimitiveUniform.TranslationMatrix), false, translationMatrix.toArray(true));
 					gl.uniform2f (shader.getUniformLocation(PrimitiveUniform.ProjectionVector), projection.x, -projection.y);
 					gl.uniform2f (shader.getUniformLocation(PrimitiveUniform.OffsetVector), -offset.x, -offset.y);
+					gl.uniform1f (shader.getUniformLocation(PrimitiveUniform.Alpha), 1);
 					
 					line.vertexArray.bind();
 					shader.bindVertexArray(line.vertexArray);
@@ -1047,7 +1048,6 @@ class GraphicsRenderer {
 		//lastBucketMode = bucket.mode;
 		
 		// common uniforms
-		gl.uniform2f (shader.getUniformLocation(DefUniform.ProjectionVector), projection.x, -projection.y);
 		gl.uniform2f (shader.getUniformLocation(DefUniform.OffsetVector), -offset.x, -offset.y);
 		gl.uniform1f (shader.getUniformLocation(DefUniform.Alpha), object.__worldAlpha);
 		
@@ -1057,9 +1057,11 @@ class GraphicsRenderer {
 		// specific uniforms
 		switch(bucket.mode) {
 			case Fill:
+				gl.uniform2f (shader.getUniformLocation(DefUniform.ProjectionVector), projection.x, -projection.y);
 				gl.uniformMatrix3fv (shader.getUniformLocation(FillUniform.TranslationMatrix), false, translationMatrix);
-				gl.uniform3fv (shader.getUniformLocation(FillUniform.Color), new Float32Array (bucket.color));
+				gl.uniform4fv (shader.getUniformLocation(FillUniform.Color), new Float32Array (bucket.color));
 			case PatternFill:
+				gl.uniform2f (shader.getUniformLocation(DefUniform.ProjectionVector), projection.x, -projection.y);
 				gl.uniformMatrix3fv (shader.getUniformLocation(PatternFillUniform.TranslationMatrix), false, translationMatrix);
 				gl.uniform2f(shader.getUniformLocation(PatternFillUniform.PatternTL), bucket.textureTL.x, bucket.textureTL.y);
 				gl.uniform2f(shader.getUniformLocation(PatternFillUniform.PatternBR), bucket.textureBR.x, bucket.textureBR.y);
@@ -1070,7 +1072,7 @@ class GraphicsRenderer {
 					gl.uniform1i(shader.getUniformLocation(DrawTrianglesUniform.UseTexture), 1);
 				} else {
 					gl.uniform1i(shader.getUniformLocation(DrawTrianglesUniform.UseTexture), 0);
-					gl.uniform3fv(shader.getUniformLocation(DrawTrianglesUniform.Color), new Float32Array (bucket.color));
+					gl.uniform4fv(shader.getUniformLocation(DrawTrianglesUniform.Color), new Float32Array (bucket.color));
 				}
 			case _:
 		}

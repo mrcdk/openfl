@@ -25,7 +25,8 @@ class DrawTrianglesShader extends Shader {
 			'void main(void) {',
 			'   gl_Position = vec4( ((${Attrib.Position} + ${Uniform.OffsetVector}) / ${Uniform.ProjectionVector}) + center , 0.0, 1.0);',
 			'   vTexCoord = ${Attrib.TexCoord};',
-			'   vColor = ${Attrib.Color};',
+			// the passed color is ARGB format
+			'   vColor = ${Attrib.Color}.bgra;',
 			'}',
 
 		];

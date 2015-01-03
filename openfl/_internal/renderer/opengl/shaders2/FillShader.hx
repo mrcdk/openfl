@@ -22,7 +22,7 @@ class FillShader extends Shader {
 			'varying vec4 vColor;',
 			
 			'void main(void) {',
-			'   vec3 v = ${Uniform.TranslationMatrix} * vec3(${Uniform.ProjectionVector} , 1.0);',
+			'   vec3 v = ${Uniform.TranslationMatrix} * vec3(${Attrib.Position}, 1.0);',
 			'   v -= ${Uniform.OffsetVector}.xyx;',
 			'   gl_Position = vec4( v.x / ${Uniform.ProjectionVector}.x -1.0, v.y / - ${Uniform.ProjectionVector}.y + 1.0 , 0.0, 1.0);',
 			'   vColor = (${Uniform.Color} * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
@@ -47,7 +47,7 @@ class FillShader extends Shader {
 	
 	override function init() {
 		super.init();
-		// TODO move the color calculation to the graphicsrenderer class
+		
 		getAttribLocation(Attrib.Position);
 		getUniformLocation(Uniform.TranslationMatrix);
 		getUniformLocation(Uniform.ProjectionVector);

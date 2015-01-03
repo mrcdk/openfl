@@ -9,14 +9,14 @@ class ColorTransform {
 	
 	
 	public var alphaMultiplier:Float;
-	public var alphaOffset:Float;
+	@:isVar public var alphaOffset(default, set):Float;
 	public var blueMultiplier:Float;
-	public var blueOffset:Float;
+	@:isVar public var blueOffset(default, set):Float;
 	public var color (get, set):Int;
 	public var greenMultiplier:Float;
-	public var greenOffset:Float;
+	@:isVar public var greenOffset(default, set):Float;
 	public var redMultiplier:Float;
-	public var redOffset:Float;
+	@:isVar public var redOffset(default, set):Float;
 	
 	
 	public function new (redMultiplier:Float = 1, greenMultiplier:Float = 1, blueMultiplier:Float = 1, alphaMultiplier:Float = 1, redOffset:Float = 0, greenOffset:Float = 0, blueOffset:Float = 0, alphaOffset:Float = 0):Void {
@@ -56,14 +56,42 @@ class ColorTransform {
 		
 	}
 	
+	@:noCompletion private function __equals (ct:ColorTransform):Bool {
+		return ( ct != null &&
+			redMultiplier == ct.redMultiplier &&
+			greenMultiplier == ct.greenMultiplier &&
+			blueMultiplier == ct.blueMultiplier &&
+			alphaMultiplier == ct.alphaMultiplier &&
+			
+			redOffset == ct.redOffset &&
+			greenOffset == ct.greenOffset &&
+			blueOffset == ct.blueOffset &&
+			alphaOffset == ct.alphaOffset
+		);
+	}
+	
 	@:noCompletion private function __clone ():ColorTransform {
 		return new ColorTransform(redMultiplier, greenMultiplier, blueMultiplier, alphaMultiplier, redOffset, greenOffset, blueOffset, alphaOffset);
 	}
 	
+	private inline function clampOffset(v:Float):Float {
+		return Math.max(-255, Math.min(v, 255));
+	}
 	
 	// Getters & Setters
 	
-	
+	@:noCompletion private inline function set_redOffset(v:Float):Float {
+		return redOffset = clampOffset(v);
+	}
+	@:noCompletion private inline function set_greenOffset(v:Float):Float {
+		return greenOffset = clampOffset(v);
+	}
+	@:noCompletion private inline function set_blueOffset(v:Float):Float {
+		return blueOffset = clampOffset(v);
+	}
+	@:noCompletion private inline function set_alphaOffset(v:Float):Float {
+		return alphaOffset = clampOffset(v);
+	}
 	
 
 	@:noCompletion private function get_color ():Int {

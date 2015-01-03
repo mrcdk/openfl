@@ -25,7 +25,7 @@ class PrimitiveShader extends Shader {
 			'   vec3 v = ${Uniform.TranslationMatrix} * vec3(${Attrib.Position} , 1.0);',
 			'   v -= ${Uniform.OffsetVector}.xyx;',
 			'   gl_Position = vec4( v.x / ${Uniform.ProjectionVector}.x -1.0, v.y / -${Uniform.ProjectionVector}.y + 1.0 , 0.0, 1.0);',
-			'   vColor = (${Attrib.Color} * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
+			'   vColor = (${Attrib.Color}.bgra * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
 			'}'
 		];
 		
@@ -53,6 +53,8 @@ class PrimitiveShader extends Shader {
 		getUniformLocation(Uniform.TranslationMatrix);
 		getUniformLocation(Uniform.ProjectionVector);
 		getUniformLocation(Uniform.OffsetVector);
+		getUniformLocation(Uniform.Alpha);
+		getUniformLocation(Uniform.ColorOffset);
 	}
 	
 }
