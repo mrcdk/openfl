@@ -64,6 +64,7 @@ class PatternFillShader extends Shader {
 		getUniformLocation(Uniform.PatternTL);
 		getUniformLocation(Uniform.PatternBR);
 		getUniformLocation(Uniform.Alpha);
+		getUniformLocation(Uniform.ColorMultiplier);
 		getUniformLocation(Uniform.ColorOffset);
 	}
 	
@@ -83,6 +84,7 @@ class PatternFillShader extends Shader {
 	var OffsetVector = DefUniform.OffsetVector;
 	var Color = DefUniform.Color;
 	var Alpha = DefUniform.Alpha;
+	var ColorMultiplier = DefUniform.ColorMultiplier;
 	var ColorOffset = DefUniform.ColorOffset;
 	
 }

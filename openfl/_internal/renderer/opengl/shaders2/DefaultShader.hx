@@ -16,8 +16,6 @@ class DefaultShader extends Shader {
 			'uniform vec2 ${Uniform.ProjectionVector};',
 			'uniform vec2 ${Uniform.OffsetVector};',
 			
-			'uniform vec4 ${Uniform.ColorMultiplier};',
-			
 			'varying vec2 vTexCoord;',
 			'varying vec4 vColor;',
 			
@@ -26,8 +24,7 @@ class DefaultShader extends Shader {
 			'void main(void) {',
 			'   gl_Position = vec4( ((${Attrib.Position} + ${Uniform.OffsetVector}) / ${Uniform.ProjectionVector}) + center , 0.0, 1.0);',
 			'   vTexCoord = ${Attrib.TexCoord};',
-			'   float a = ${Attrib.Color}.a * ${Uniform.ColorMultiplier}.a;',
-			'   vColor = vec4(${Attrib.Color}.rgb * ${Uniform.ColorMultiplier}.rgb * a, a);',
+			'   vColor = ${Attrib.Color};',
 			'}'
 		];
 		
@@ -37,14 +34,20 @@ class DefaultShader extends Shader {
 			'#endif',
 			
 			'uniform sampler2D ${Uniform.Sampler};',
+			'uniform vec4 ${Uniform.ColorMultiplier};',
 			'uniform vec4 ${Uniform.ColorOffset};',
 			
 			'varying vec2 vTexCoord;',
 			'varying vec4 vColor;',
 			
 			'void main(void) {',
-			'   float a = ${Uniform.ColorOffset}.a * vColor.a;',
-			'   gl_FragColor = (texture2D(${Uniform.Sampler}, vTexCoord) * vColor) + vec4(${Uniform.ColorOffset}.rgb * a, a);',
+			'   vec4 tc = texture2D(${Uniform.Sampler}, vTexCoord);',
+			'   vec4 vc = vColor;',
+			'   vec4 cm = ${Uniform.ColorMultiplier};',
+
+			'   vec4 mult = clamp(tc * vc * cm, 0., 1.);',
+			'   mult = vec4(mult.rgb * mult.a, mult.a);',
+			'   gl_FragColor = mult + ${Uniform.ColorOffset};',
 			'}'
 		
 		];

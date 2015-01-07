@@ -53,6 +53,8 @@ class FillShader extends Shader {
 		getUniformLocation(Uniform.ProjectionVector);
 		getUniformLocation(Uniform.OffsetVector);
 		getUniformLocation(Uniform.Color);
+		getUniformLocation(Uniform.ColorMultiplier);
+		getUniformLocation(Uniform.ColorOffset);
 	}
 	
 }
@@ -67,6 +69,7 @@ class FillShader extends Shader {
 	var OffsetVector = DefUniform.OffsetVector;
 	var Color = DefUniform.Color;
 	var Alpha = DefUniform.Alpha;
+	var ColorMultiplier = DefUniform.ColorMultiplier;
 	var ColorOffset = DefUniform.ColorOffset;
 }
 

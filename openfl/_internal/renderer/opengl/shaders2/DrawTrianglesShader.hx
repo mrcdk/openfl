@@ -75,6 +75,7 @@ class DrawTrianglesShader extends Shader {
 		getUniformLocation(Uniform.Color);
 		getUniformLocation(Uniform.Alpha);
 		getUniformLocation(Uniform.UseTexture);
+		getUniformLocation(Uniform.ColorMultiplier);
 		getUniformLocation(Uniform.ColorOffset);
 		
 	}
@@ -88,14 +89,14 @@ class DrawTrianglesShader extends Shader {
 }
 
 @:enum private abstract Uniform(String) from String to String {
+	var UseTexture = "uUseTexture";
 	var Sampler = DefUniform.Sampler;
 	var ProjectionVector = DefUniform.ProjectionVector;
 	var OffsetVector = DefUniform.OffsetVector;
 	var Color = DefUniform.Color;
 	var Alpha = DefUniform.Alpha;
-	var ColorOffset = DefUniform.ColorOffset;
-	var UseTexture = "uUseTexture";
-	
+	var ColorMultiplier = DefUniform.ColorMultiplier;
+	var ColorOffset = DefUniform.ColorOffset;	
 }
 
 typedef DrawTrianglesAttrib = Attrib;

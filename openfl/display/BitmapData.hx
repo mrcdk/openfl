@@ -588,15 +588,18 @@ class BitmapData implements IBitmapDrawable {
 					__spritebatch.start(tmpRect);
 				}
 				
+				var ctCache = source.__worldColorTransform;
 				var matrixCache = source.__worldTransform;
 				var blendModeCache = source.blendMode;
 				
 				source.__worldTransform = matrix != null ? matrix : new Matrix ();
+				source.__worldColorTransform = colorTransform != null ? colorTransform : new ColorTransform();
 				source.blendMode = blendMode;
 				source.__updateChildren (false);
 				
 				source.__renderGL (renderSession);
 				
+				source.__worldColorTransform = ctCache;
 				source.__worldTransform = matrixCache;
 				source.blendMode = blendModeCache;
 				source.__updateChildren (true);

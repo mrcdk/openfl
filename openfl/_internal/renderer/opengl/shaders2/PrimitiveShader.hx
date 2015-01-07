@@ -54,6 +54,7 @@ class PrimitiveShader extends Shader {
 		getUniformLocation(Uniform.ProjectionVector);
 		getUniformLocation(Uniform.OffsetVector);
 		getUniformLocation(Uniform.Alpha);
+		getUniformLocation(Uniform.ColorMultiplier);
 		getUniformLocation(Uniform.ColorOffset);
 	}
 	
@@ -70,6 +71,7 @@ class PrimitiveShader extends Shader {
 	var OffsetVector = DefUniform.OffsetVector;
 	var Color = DefUniform.Color;
 	var Alpha = DefUniform.Alpha;
+	var ColorMultiplier = DefUniform.ColorMultiplier;
 	var ColorOffset = DefUniform.ColorOffset;
 }
 
