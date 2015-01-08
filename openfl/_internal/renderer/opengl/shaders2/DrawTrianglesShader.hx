@@ -40,6 +40,7 @@ class DrawTrianglesShader extends Shader {
 			'uniform vec3 ${Uniform.Color};',
 			'uniform bool ${Uniform.UseTexture};',
 			'uniform float ${Uniform.Alpha};',
+			'uniform vec4 ${Uniform.ColorMultiplier};',
 			'uniform vec4 ${Uniform.ColorOffset};',
 			
 			'varying vec2 vTexCoord;',
@@ -53,8 +54,14 @@ class DrawTrianglesShader extends Shader {
 			'   } else {',
 			'       tmp = vec4(${Uniform.Color}, 1.);',
 			'   }',
-			'   float a = tmp.a * vColor.a * ${Uniform.Alpha};',
-			'   gl_FragColor = vec4(vec3((tmp.rgb * vColor.rgb) * a), a) + ${Uniform.ColorOffset};',
+			
+			'   vec4 vc = vColor;',
+			'   vec4 cm = ${Uniform.ColorMultiplier};',
+
+			'   vec4 mult = clamp(tmp * vc * cm, 0., 1.);',
+			'   mult = mult + ${Uniform.ColorOffset};',
+			'   mult = vec4(mult.rgb * mult.a, mult.a);',
+			'   gl_FragColor = mult;',
 			'}'
 		];
 		

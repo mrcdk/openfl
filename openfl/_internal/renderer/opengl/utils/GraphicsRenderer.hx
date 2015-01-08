@@ -1051,7 +1051,8 @@ class GraphicsRenderer {
 		gl.uniform2f (shader.getUniformLocation(DefUniform.OffsetVector), -offset.x, -offset.y);
 		gl.uniform1f (shader.getUniformLocation(DefUniform.Alpha), object.__worldAlpha);
 		
-		var ct:ColorTransform = object.transform.colorTransform;
+		var ct:ColorTransform = object.__worldColorTransform;
+		gl.uniform4f (shader.getUniformLocation(FillUniform.ColorMultiplier), ct.redMultiplier, ct.greenMultiplier, ct.blueMultiplier, ct.alphaMultiplier);
 		gl.uniform4f (shader.getUniformLocation(FillUniform.ColorOffset), ct.redOffset / 255, ct.greenOffset / 255, ct.blueOffset / 255, ct.alphaOffset / 255);
 
 		// specific uniforms
