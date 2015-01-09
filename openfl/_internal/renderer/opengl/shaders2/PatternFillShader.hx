@@ -35,15 +35,25 @@ class PatternFillShader extends Shader {
 			'uniform float ${Uniform.Alpha};',
 			'uniform vec2 ${Uniform.PatternTL};',
 			'uniform vec2 ${Uniform.PatternBR};',
-			'uniform vec4 ${Uniform.ColorOffset};',
 			'uniform sampler2D ${Uniform.Sampler};',
 			
+			'uniform vec4 ${Uniform.ColorMultiplier};',
+			'uniform vec4 ${Uniform.ColorOffset};',
+			
 			'varying vec2 vPosition;',
+			
+			'vec4 colorTransform(const vec4 input, const float alpha, const vec4 multiplier, const vec4 offset) {',
+			'   vec4 result = clamp(input * multiplier, 0., 1.);',
+			'   result.a *= alpha;',
+			'   result = result + offset;',
+			'   result = vec4(result.rgb * result.a, result.a);',
+			'   return result;',
+			'}',	
 			
 			'void main(void) {',
 			'   vec2 pos = mix(${Uniform.PatternTL}, ${Uniform.PatternBR}, vPosition);',
 			'   vec4 tcol = texture2D(${Uniform.Sampler}, pos);',
-			'   gl_FragColor = (tcol * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
+			'   gl_FragColor = colorTransform(tcol, ${Uniform.Alpha}, ${Uniform.ColorMultiplier}, ${Uniform.ColorOffset});',
 			'}'
 		];
 		

@@ -17,15 +17,24 @@ class FillShader extends Shader {
 			
 			'uniform vec4 ${Uniform.Color};',
 			'uniform float ${Uniform.Alpha};',
+			'uniform vec4 ${Uniform.ColorMultiplier};',
 			'uniform vec4 ${Uniform.ColorOffset};',
 			
 			'varying vec4 vColor;',
+			
+			'vec4 colorTransform(const vec4 input, const float alpha, const vec4 multiplier, const vec4 offset) {',
+			'   vec4 result = clamp(input * multiplier, 0., 1.);',
+			'   result.a *= alpha;',
+			'   result = result + offset;',
+			'   result = vec4(result.rgb * result.a, result.a);',
+			'   return result;',
+			'}',			
 			
 			'void main(void) {',
 			'   vec3 v = ${Uniform.TranslationMatrix} * vec3(${Attrib.Position}, 1.0);',
 			'   v -= ${Uniform.OffsetVector}.xyx;',
 			'   gl_Position = vec4( v.x / ${Uniform.ProjectionVector}.x -1.0, v.y / - ${Uniform.ProjectionVector}.y + 1.0 , 0.0, 1.0);',
-			'   vColor = (${Uniform.Color} * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
+			'   vColor = colorTransform(${Uniform.Color}, ${Uniform.Alpha}, ${Uniform.ColorMultiplier}, ${Uniform.ColorOffset});',
 			'}'
 
 		];
