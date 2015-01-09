@@ -16,13 +16,22 @@ class VertexAttribute {
 	
 	public var defaultValue:Float32Array;
 	
-	public function new(components:Int, type:ElementType, normalized:Bool = false, name:String) {
+	public function new(components:Int, type:ElementType, normalized:Bool = false, name:String, ?defaultValue:Float32Array) {
 		this.components = components;
 		this.type = type;
 		this.normalized = normalized;
 		this.name = name;
 		
-		defaultValue = new Float32Array(components);
+		if (defaultValue == null) {
+			this.defaultValue = new Float32Array(components);
+		} else {
+			this.defaultValue = defaultValue;
+		}
+		
+	}
+	
+	public function copy() {
+		return new VertexAttribute(components, type, normalized, name, defaultValue);
 	}
 	
 	private inline function getElementsBytes() {

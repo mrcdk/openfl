@@ -1279,7 +1279,9 @@ class GLBucket {
 			case Fill, PatternFill:
 				result.vertexArray.attributes = GraphicsRenderer.fillVertexAttributes;
 			case DrawTriangles:
-				result.vertexArray.attributes = GraphicsRenderer.drawTrianglesVertexAttributes;
+				// we are using static values and we don't want the color attribute to be shared.
+				result.vertexArray.attributes = GraphicsRenderer.drawTrianglesVertexAttributes.copy();
+				result.vertexArray.attributes[2] = result.vertexArray.attributes[2].copy();
 			case Line, PatternLine:
 				result.vertexArray.attributes = GraphicsRenderer.primitiveVertexAttributes;
 			case _:
