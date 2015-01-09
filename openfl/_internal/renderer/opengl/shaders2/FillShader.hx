@@ -22,8 +22,8 @@ class FillShader extends Shader {
 			
 			'varying vec4 vColor;',
 			
-			'vec4 colorTransform(const vec4 input, const float alpha, const vec4 multiplier, const vec4 offset) {',
-			'   vec4 result = clamp(input * multiplier, 0., 1.);',
+			'vec4 colorTransform(const vec4 color, const float alpha, const vec4 multiplier, const vec4 offset) {',
+			'   vec4 result = clamp(color * multiplier, 0., 1.);',
 			'   result.a *= alpha;',
 			'   result = result + offset;',
 			'   result = vec4(result.rgb * result.a, result.a);',
