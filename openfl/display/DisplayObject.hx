@@ -702,7 +702,6 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	@:dox(hide) @:noCompletion public var __worldColorTransform:ColorTransform;
 	
 	
-	@:noCompletion private var __alpha:Float;
 	@:noCompletion private var __filters:Array<BitmapFilter>;
 	@:noCompletion private var __graphics:Graphics;
 	@:noCompletion private var __interactive:Bool;
@@ -1315,15 +1314,15 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	
 	@:noCompletion private function get_alpha ():Float {
 		
-		return __alpha;
+		return transform.colorTransform.alphaMultiplier;
 		
 	}
 	
 	
 	@:noCompletion private function set_alpha (value:Float):Float {
 		
-		if (value != __alpha) __setRenderDirty ();
-		return __alpha = value;
+		if (value != transform.colorTransform.alphaMultiplier) __setRenderDirty ();
+		return transform.colorTransform.alphaMultiplier = value;
 		
 	}
 	
@@ -1547,7 +1546,7 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 		
 		__setTransformDirty ();
 		__transform.matrix = value.matrix.clone ();
-		__transform.colorTransform = new ColorTransform (value.colorTransform.redMultiplier, value.colorTransform.greenMultiplier, value.colorTransform.blueMultiplier, value.colorTransform.alphaMultiplier, value.colorTransform.redOffset, value.colorTransform.greenOffset, value.colorTransform.blueOffset, value.colorTransform.alphaOffset);
+		__transform.colorTransform = value.colorTransform.__clone();
 		
 		return __transform;
 		
