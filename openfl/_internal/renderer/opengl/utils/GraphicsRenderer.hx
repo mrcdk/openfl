@@ -830,7 +830,7 @@ class GraphicsRenderer {
 					}
 					renderSession.stencilManager.pushBucket(bucket, renderSession, projection, translationMatrix.toArray(true));
 					var shader = prepareShader(bucket, renderSession, object, projection, translationMatrix.toArray(false));
-					renderFill(bucket, shader, renderSession, object);
+					renderFill(bucket, shader, renderSession, translationMatrix.toArray(true));
 					renderSession.stencilManager.popBucket(object, bucket, renderSession);
 				case DrawTriangles:
 					if (batchDrawing && !localCoords) {
@@ -1085,17 +1085,13 @@ class GraphicsRenderer {
 		return shader;
 	}
 	
-	private static function renderFill(bucket:GLBucket, shader:Shader, renderSession:RenderSession, object:DisplayObject) {
+	private static function renderFill(bucket:GLBucket, shader:Shader, renderSession:RenderSession, translationMatrix:Float32Array) {
 		var gl = renderSession.gl;
 		
 		if (bucket.mode == PatternFill && bucket.texture != null) {
 			bindTexture(gl, bucket);
-			// Take into account the sprite translation
-			gl.uniform2f (shader.getUniformLocation(FillUniform.OffsetVector), -object.__worldTransform.tx, -object.__worldTransform.ty);
 		}
-		
-		gl.uniformMatrix3fv (shader.getUniformLocation(FillUniform.TranslationMatrix), false, Matrix.__identity.toArray(false));
-		
+		gl.uniformMatrix3fv (shader.getUniformLocation(PatternFillUniform.TranslationMatrix), false, translationMatrix);
 		gl.bindBuffer(gl.ARRAY_BUFFER, bucket.tileBuffer);
 		gl.vertexAttribPointer (shader.getAttribLocation(FillAttrib.Position), 4, gl.SHORT, false, 0, 0);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
