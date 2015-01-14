@@ -56,7 +56,7 @@ class GraphicsRenderer {
 	];
 	public static var primitiveVertexAttributes = [
 		new VertexAttribute(2, ElementType.FLOAT, false, PrimitiveAttrib.Position),
-		new VertexAttribute(4, ElementType.UNSIGNED_BYTE, true, PrimitiveAttrib.Color),
+		new VertexAttribute(4, ElementType.FLOAT, false, PrimitiveAttrib.Color),
 	];
 	
 	public static var graphicsDataPool:Array<GLGraphicsData> = [];
@@ -830,7 +830,7 @@ class GraphicsRenderer {
 					}
 					renderSession.stencilManager.pushBucket(bucket, renderSession, projection, translationMatrix.toArray(true));
 					var shader = prepareShader(bucket, renderSession, object, projection, translationMatrix.toArray(false));
-					renderFill(bucket, shader, renderSession);
+					renderFill(bucket, shader, renderSession, object);
 					renderSession.stencilManager.popBucket(object, bucket, renderSession);
 				case DrawTriangles:
 					if (batchDrawing && !localCoords) {
@@ -880,7 +880,11 @@ class GraphicsRenderer {
 		
 		var graphics = object.__graphics;
 		objectPosition.setTo(object.x, object.y);
-		objectBounds.copyFrom(graphics.__bounds);
+		if (graphics.__bounds == null) {
+			objectBounds = new Rectangle();
+		} else {
+			objectBounds.copyFrom(graphics.__bounds);
+		}
 		var glStack:GLStack = null;
 		
 		if (graphics.__dirty) {
@@ -1062,7 +1066,7 @@ class GraphicsRenderer {
 				gl.uniformMatrix3fv (shader.getUniformLocation(FillUniform.TranslationMatrix), false, translationMatrix);
 				gl.uniform4fv (shader.getUniformLocation(FillUniform.Color), new Float32Array (bucket.color));
 			case PatternFill:
-				gl.uniform2f (shader.getUniformLocation(DefUniform.ProjectionVector), projection.x, -projection.y);
+				gl.uniform2f (shader.getUniformLocation(PatternFillUniform.ProjectionVector), projection.x, -projection.y);
 				gl.uniformMatrix3fv (shader.getUniformLocation(PatternFillUniform.TranslationMatrix), false, translationMatrix);
 				gl.uniform2f(shader.getUniformLocation(PatternFillUniform.PatternTL), bucket.textureTL.x, bucket.textureTL.y);
 				gl.uniform2f(shader.getUniformLocation(PatternFillUniform.PatternBR), bucket.textureBR.x, bucket.textureBR.y);
@@ -1081,15 +1085,19 @@ class GraphicsRenderer {
 		return shader;
 	}
 	
-	private static function renderFill(bucket:GLBucket, shader:Dynamic, renderSession:RenderSession) {
+	private static function renderFill(bucket:GLBucket, shader:Shader, renderSession:RenderSession, object:DisplayObject) {
 		var gl = renderSession.gl;
 		
 		if (bucket.mode == PatternFill && bucket.texture != null) {
 			bindTexture(gl, bucket);
+			// Take into account the sprite translation
+			gl.uniform2f (shader.getUniformLocation(FillUniform.OffsetVector), -object.__worldTransform.tx, -object.__worldTransform.ty);
 		}
 		
+		gl.uniformMatrix3fv (shader.getUniformLocation(FillUniform.TranslationMatrix), false, Matrix.__identity.toArray(false));
+		
 		gl.bindBuffer(gl.ARRAY_BUFFER, bucket.tileBuffer);
-		gl.vertexAttribPointer (shader.aVertexPosition, 4, gl.SHORT, false, 0, 0);
+		gl.vertexAttribPointer (shader.getAttribLocation(FillAttrib.Position), 4, gl.SHORT, false, 0, 0);
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	}
 	
