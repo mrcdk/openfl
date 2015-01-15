@@ -447,7 +447,12 @@ class Graphics {
 	 */
 	public function drawPath (commands:Vector<Int>, data:Vector<Float>, winding:GraphicsPathWinding = null):Void {
 		
-		openfl.Lib.notImplemented ("Graphics.drawPath");
+		// TODO fix this
+		__inflateBounds (0, 0);
+		__inflateBounds (Lib.current.stage.stageWidth, Lib.current.stage.stageHeight);
+		
+		__commands.push(DrawPathC(commands, data, winding));
+		__dirty = true;
 		
 	}
 	
@@ -1002,6 +1007,7 @@ class Graphics {
 	LineStyle (thickness:Null<Float>, color:Null<Int>, alpha:Null<Float>, pixelHinting:Null<Bool>, scaleMode:LineScaleMode, caps:CapsStyle, joints:JointStyle, miterLimit:Null<Float>);
 	LineTo (x:Float, y:Float);
 	MoveTo (x:Float, y:Float);
+	DrawPathC(commands:Vector<Int>, data:Vector<Float>, winding:GraphicsPathWinding);
 	
 }
 

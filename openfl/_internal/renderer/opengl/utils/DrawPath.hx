@@ -11,6 +11,7 @@ import openfl.display.BlendMode;
 import openfl.display.CapsStyle;
 import openfl.display.DisplayObject;
 import openfl.display.Graphics;
+import openfl.display.GraphicsPathCommand;
 import openfl.display.JointStyle;
 import openfl.display.LineScaleMode;
 import openfl.display.TriangleCulling;
@@ -22,40 +23,40 @@ import openfl.Vector;
 class DrawPath {
 
 
-public var line:LineStyle;
-public var fill:FillType;
-public var fillIndex:Int = 0;
-public var isRemovable:Bool = true;
+	public var line:LineStyle;
+	public var fill:FillType;
+	public var fillIndex:Int = 0;
+	public var isRemovable:Bool = true;
 
-public var points:Array<Float> = [];
+	public var points:Array<Float> = [];
 
 
-public var type:GraphicType = Polygon;
+	public var type:GraphicType = Polygon;
 
-public function new() {
-	line = new LineStyle();
-	fill = None;
-}
+	public function new() {
+		line = new LineStyle();
+		fill = None;
+	}
 
-public function update(line:LineStyle, fill:FillType, fillIndex:Int):Void {
-	updateLine(line);
-	this.fill = fill;
-	this.fillIndex = fillIndex;
-}
+	public function update(line:LineStyle, fill:FillType, fillIndex:Int):Void {
+		updateLine(line);
+		this.fill = fill;
+		this.fillIndex = fillIndex;
+	}
 
-public function updateLine(line:LineStyle):Void {
-	this.line.width = line.width;
-	this.line.color = line.color;
-	this.line.alpha = line.alpha == null ? 1 : line.alpha;
-	this.line.scaleMode = line.scaleMode == null ? LineScaleMode.NORMAL : line.scaleMode;
-	this.line.caps = line.caps == null ? CapsStyle.ROUND : line.caps;
-	this.line.joints = line.joints == null ? JointStyle.ROUND : line.joints;
-	this.line.miterLimit = line.miterLimit;
-}
+	public function updateLine(line:LineStyle):Void {
+		this.line.width = line.width;
+		this.line.color = line.color;
+		this.line.alpha = line.alpha == null ? 1 : line.alpha;
+		this.line.scaleMode = line.scaleMode == null ? LineScaleMode.NORMAL : line.scaleMode;
+		this.line.caps = line.caps == null ? CapsStyle.ROUND : line.caps;
+		this.line.joints = line.joints == null ? JointStyle.ROUND : line.joints;
+		this.line.miterLimit = line.miterLimit;
+	}
 
-public static function getStack(graphics:Graphics, gl:GLRenderContext):GLStack {
-	return PathBuiler.build(graphics, gl);
-}
+	public static function getStack(graphics:Graphics, gl:GLRenderContext):GLStack {
+		return PathBuiler.build(graphics, gl);
+	}
 
 }
 
@@ -93,7 +94,7 @@ class PathBuiler {
 		
 	}
 
-	private static function moveTo (x:Float, y:Float):Void {
+	private static inline function moveTo (x:Float, y:Float) {
 		
 		graphicDataPop ();
 		__currentPath = new DrawPath ();
@@ -104,6 +105,90 @@ class PathBuiler {
 		
 		__drawPaths.push (__currentPath);
 		
+	}
+	
+	private static inline function lineTo (x:Float, y:Float) {
+		__currentPath.points.push (x);
+		__currentPath.points.push (y);
+	}
+	
+	private static inline function curveTo (cx:Float, cy:Float, x:Float, y:Float) {
+		if (__currentPath.points.length == 0) {
+			
+			moveTo (0, 0);
+			
+		}
+		
+		var xa:Float = 0;
+		var ya:Float = 0;
+		var n = 20;
+		
+		var points = __currentPath.points;
+		var fromX = points[points.length-2];
+		var fromY = points[points.length-1];
+		
+		var px:Float = 0;
+		var py:Float = 0;
+		
+		var tmp:Float = 0;
+		
+		for (i in 1...(n + 1)) {
+			
+			tmp = i / n;
+			
+			xa = fromX + ((cx - fromX) * tmp);
+			ya = fromY + ((cy - fromY) * tmp);
+			
+			px = xa + (((cx + (x - cx) * tmp)) - xa) * tmp;
+			py = ya + (((cy + (y - cy) * tmp)) - ya) * tmp;
+			
+			points.push (px);
+			points.push (py);
+			
+		}
+	}
+	
+	private static inline function cubicCurveTo(cx:Float, cy:Float, cx2:Float, cy2:Float, x:Float, y:Float) {
+		if (__currentPath.points.length == 0) {
+			
+			moveTo (0, 0);
+			
+		}
+		
+		var n = 20;
+		var dt:Float = 0;
+		var dt2:Float = 0;
+		var dt3:Float = 0;
+		var t2:Float = 0;
+		var t3:Float = 0;
+		
+		var points = __currentPath.points;
+		var fromX = points[points.length-2];
+		var fromY = points[points.length-1];
+		
+		var px:Float = 0;
+		var py:Float = 0;
+		
+		var tmp:Float = 0;
+		
+		for (i in 1...(n + 1)) {
+			
+			tmp = i / n;
+			
+			dt = 1 - tmp;
+			dt2 = dt * dt;
+			dt3 = dt2 * dt;
+			
+			t2 = tmp * tmp;
+			t3 = t2 * tmp;
+			
+			px = dt3 * fromX + 3 * dt2 * tmp * cx + 3 * dt * t2 * cx2 + t3 * x;
+			py = dt3 * fromY + 3 * dt2 * tmp * cy + 3 * dt * t2 * cy2 + t3 * y;
+			
+			points.push (px);
+			points.push (py);
+			
+		}
 	}
 
 	private inline static function graphicDataPop ():Void {
@@ -175,82 +260,11 @@ class PathBuiler {
 					
 					case CubicCurveTo (cx, cy, cx2, cy2, x, y):
 						
-						if (__currentPath.points.length == 0) {
-							
-							moveTo (0, 0);
-							
-						}
-						
-						var n = 20;
-						var dt:Float = 0;
-						var dt2:Float = 0;
-						var dt3:Float = 0;
-						var t2:Float = 0;
-						var t3:Float = 0;
-						
-						var points = __currentPath.points;
-						var fromX = points[points.length-2];
-						var fromY = points[points.length-1];
-						
-						var px:Float = 0;
-						var py:Float = 0;
-						
-						var tmp:Float = 0;
-						
-						for (i in 1...(n + 1)) {
-							
-							tmp = i / n;
-							
-							dt = 1 - tmp;
-							dt2 = dt * dt;
-							dt3 = dt2 * dt;
-							
-							t2 = tmp * tmp;
-							t3 = t2 * tmp;
-							
-							px = dt3 * fromX + 3 * dt2 * tmp * cx + 3 * dt * t2 * cx2 + t3 * x;
-							py = dt3 * fromY + 3 * dt2 * tmp * cy + 3 * dt * t2 * cy2 + t3 * y;
-							
-							points.push (px);
-							points.push (py);
-							
-						}
+						cubicCurveTo (cx, cy, cx2, cy2, x, y);
 					
 					case CurveTo (cx, cy, x, y):
 						
-						if (__currentPath.points.length == 0) {
-							
-							moveTo (0, 0);
-							
-						}
-						
-						var xa:Float = 0;
-						var ya:Float = 0;
-						var n = 20;
-						
-						var points = __currentPath.points;
-						var fromX = points[points.length-2];
-						var fromY = points[points.length-1];
-						
-						var px:Float = 0;
-						var py:Float = 0;
-						
-						var tmp:Float = 0;
-						
-						for (i in 1...(n + 1)) {
-							
-							tmp = i / n;
-							
-							xa = fromX + ((cx - fromX) * tmp);
-							ya = fromY + ((cy - fromY) * tmp);
-							
-							px = xa + (((cx + (x - cx) * tmp)) - xa) * tmp;
-							py = ya + (((cy + (y - cy) * tmp)) - ya) * tmp;
-							
-							points.push (px);
-							points.push (py);
-							
-						}
+						curveTo (cx, cy, x, y);
 					
 					case DrawCircle (x, y, radius):
 						
@@ -344,8 +358,7 @@ class PathBuiler {
 					
 					case LineTo (x, y):
 						
-						__currentPath.points.push (x);
-						__currentPath.points.push (y);
+						lineTo (x, y);
 					
 					case MoveTo (x, y):
 						
@@ -388,6 +401,51 @@ class PathBuiler {
 						__currentPath.isRemovable = false;
 						__drawPaths.push (__currentPath);
 							
+						
+					case DrawPathC (commands, data, winding):
+						graphicDataPop ();
+						
+						var command:Int;
+						var cx:Float, cy:Float;
+						var cx2:Float, cy2:Float;
+						var ax:Float, ay:Float;
+						for (i in 0...commands.length) {
+							command = commands[i];
+							switch(command) {
+								case GraphicsPathCommand.MOVE_TO:
+									ax = data[i * 2 + 0];
+									ay = data[i * 2 + 1];
+									moveTo(ax, ay);
+								case GraphicsPathCommand.WIDE_MOVE_TO:
+									ax = data[i * 2 + 2];
+									ay = data[i * 2 + 3];
+									moveTo(ax, ay);
+								case GraphicsPathCommand.LINE_TO:
+									ax = data[i * 2 + 0];
+									ay = data[i * 2 + 1];
+									lineTo(ax, ay);
+								case GraphicsPathCommand.WIDE_LINE_TO:
+									ax = data[i * 2 + 2];
+									ay = data[i * 2 + 3];
+									lineTo(ax, ay);
+								case GraphicsPathCommand.CURVE_TO:
+									cx = data[i * 2 + 0];
+									cy = data[i * 2 + 1];
+									ax = data[i * 2 + 2];
+									ay = data[i * 2 + 3];
+									curveTo(cx, cy, ax, ay);
+								case GraphicsPathCommand.CUBIC_CURVE_TO:
+									cx = data[i * 2 + 0];
+									cy = data[i * 2 + 1];
+									cx2 = data[i * 2 + 2];
+									cy2 = data[i * 2 + 3];
+									ax = data[i * 2 + 4];
+									ay = data[i * 2 + 5];
+									cubicCurveTo(cx, cy, cx2, cy2, ax, ay);
+									
+								default:
+							}
+						}
 					default:
 						
 				}
@@ -430,8 +488,8 @@ class LineStyle {
 
 
 enum FillType {
-None;
-Color(color:Int, alpha:Float);
-Texture(bitmap:BitmapData, matrix:Matrix, repeat:Bool, smooth:Bool);
-Gradient;
+	None;
+	Color(color:Int, alpha:Float);
+	Texture(bitmap:BitmapData, matrix:Matrix, repeat:Bool, smooth:Bool);
+	Gradient;
 }
