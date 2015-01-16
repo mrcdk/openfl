@@ -16,16 +16,25 @@ class PrimitiveShader extends Shader {
 			'uniform mat3 ${Uniform.TranslationMatrix};',
 			'uniform vec2 ${Uniform.ProjectionVector};',
 			'uniform vec2 ${Uniform.OffsetVector};',
+			'uniform vec4 ${Uniform.ColorMultiplier};',
 			'uniform vec4 ${Uniform.ColorOffset};',
 			'uniform float ${Uniform.Alpha};',
 			
 			'varying vec4 vColor;',
 			
+			'vec4 colorTransform(const vec4 color, const float alpha, const vec4 multiplier, const vec4 offset) {',
+			'   vec4 result = clamp(color * multiplier, 0., 1.);',
+			'   result.a *= alpha;',
+			'   result = result + offset;',
+			'   result = vec4(result.rgb * result.a, result.a);',
+			'   return result;',
+			'}',	
+			
 			'void main(void) {',
 			'   vec3 v = ${Uniform.TranslationMatrix} * vec3(${Attrib.Position} , 1.0);',
 			'   v -= ${Uniform.OffsetVector}.xyx;',
 			'   gl_Position = vec4( v.x / ${Uniform.ProjectionVector}.x -1.0, v.y / -${Uniform.ProjectionVector}.y + 1.0 , 0.0, 1.0);',
-			'   vColor = (${Attrib.Color}.bgra * ${Uniform.Alpha}) + ${Uniform.ColorOffset};',
+			'   vColor = colorTransform(${Attrib.Color}, ${Uniform.Alpha}, ${Uniform.ColorMultiplier}, ${Uniform.ColorOffset});',
 			'}'
 		];
 		
@@ -69,7 +78,6 @@ class PrimitiveShader extends Shader {
 	var TranslationMatrix = "uTranslationMatrix";
 	var ProjectionVector = DefUniform.ProjectionVector;
 	var OffsetVector = DefUniform.OffsetVector;
-	var Color = DefUniform.Color;
 	var Alpha = DefUniform.Alpha;
 	var ColorMultiplier = DefUniform.ColorMultiplier;
 	var ColorOffset = DefUniform.ColorOffset;

@@ -846,6 +846,7 @@ class GraphicsRenderer {
 				case _:
 			}
 			
+			var ct:ColorTransform = object.__worldColorTransform;
 			for (line in bucket.lines) {
 				if (line != null && line.verts.length > 0) {
 					batchDrawing = renderSession.spriteBatch2.drawing;
@@ -860,6 +861,9 @@ class GraphicsRenderer {
 					gl.uniform2f (shader.getUniformLocation(PrimitiveUniform.ProjectionVector), projection.x, -projection.y);
 					gl.uniform2f (shader.getUniformLocation(PrimitiveUniform.OffsetVector), -offset.x, -offset.y);
 					gl.uniform1f (shader.getUniformLocation(PrimitiveUniform.Alpha), 1);
+					
+					gl.uniform4f (shader.getUniformLocation(FillUniform.ColorMultiplier), ct.redMultiplier, ct.greenMultiplier, ct.blueMultiplier, ct.alphaMultiplier);
+					gl.uniform4f (shader.getUniformLocation(FillUniform.ColorOffset), ct.redOffset / 255, ct.greenOffset / 255, ct.blueOffset / 255, ct.alphaOffset / 255);
 					
 					line.vertexArray.bind();
 					shader.bindVertexArray(line.vertexArray);
@@ -1058,7 +1062,7 @@ class GraphicsRenderer {
 		var ct:ColorTransform = object.__worldColorTransform;
 		gl.uniform4f (shader.getUniformLocation(FillUniform.ColorMultiplier), ct.redMultiplier, ct.greenMultiplier, ct.blueMultiplier, ct.alphaMultiplier);
 		gl.uniform4f (shader.getUniformLocation(FillUniform.ColorOffset), ct.redOffset / 255, ct.greenOffset / 255, ct.blueOffset / 255, ct.alphaOffset / 255);
-
+		
 		// specific uniforms
 		switch(bucket.mode) {
 			case Fill:
