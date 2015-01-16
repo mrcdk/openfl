@@ -409,38 +409,45 @@ class PathBuiler {
 						var cx:Float, cy:Float;
 						var cx2:Float, cy2:Float;
 						var ax:Float, ay:Float;
+						var idx = 0;
 						for (i in 0...commands.length) {
 							command = commands[i];
 							switch(command) {
 								case GraphicsPathCommand.MOVE_TO:
-									ax = data[i * 2 + 0];
-									ay = data[i * 2 + 1];
+									ax = data[idx + 0];
+									ay = data[idx + 1];
+									idx += 2;
 									moveTo(ax, ay);
 								case GraphicsPathCommand.WIDE_MOVE_TO:
-									ax = data[i * 2 + 2];
-									ay = data[i * 2 + 3];
+									ax = data[idx + 2];
+									ay = data[idx + 3];
+									idx += 4;
 									moveTo(ax, ay);
 								case GraphicsPathCommand.LINE_TO:
-									ax = data[i * 2 + 0];
-									ay = data[i * 2 + 1];
+									ax = data[idx + 0];
+									ay = data[idx + 1];
+									idx += 2;
 									lineTo(ax, ay);
 								case GraphicsPathCommand.WIDE_LINE_TO:
-									ax = data[i * 2 + 2];
-									ay = data[i * 2 + 3];
+									ax = data[idx + 2];
+									ay = data[idx + 3];
+									idx += 4;
 									lineTo(ax, ay);
 								case GraphicsPathCommand.CURVE_TO:
-									cx = data[i * 2 + 0];
-									cy = data[i * 2 + 1];
-									ax = data[i * 2 + 2];
-									ay = data[i * 2 + 3];
+									cx = data[idx + 0];
+									cy = data[idx + 1];
+									ax = data[idx + 2];
+									ay = data[idx + 3];
+									idx += 4;
 									curveTo(cx, cy, ax, ay);
 								case GraphicsPathCommand.CUBIC_CURVE_TO:
-									cx = data[i * 2 + 0];
-									cy = data[i * 2 + 1];
-									cx2 = data[i * 2 + 2];
-									cy2 = data[i * 2 + 3];
-									ax = data[i * 2 + 4];
-									ay = data[i * 2 + 5];
+									cx = data[idx + 0];
+									cy = data[idx + 1];
+									cx2 = data[idx + 2];
+									cy2 = data[idx + 3];
+									ax = data[idx + 4];
+									ay = data[idx + 5];
+									idx += 6;
 									cubicCurveTo(cx, cy, cx2, cy2, ax, ay);
 									
 								default:
