@@ -13,6 +13,8 @@ import openfl.display.DisplayObject;
 import openfl.geom.Point;
 
 @:access(openfl.display.DisplayObject)
+@:access(openfl.display.Graphics)
+@:access(openfl.display.BitmapData)
 @:access(openfl.geom.Matrix)
 
 class StencilManager {
@@ -20,17 +22,18 @@ class StencilManager {
 	
 	public var count:Int;
 	public var gl:GLRenderContext;
-	public var maskStack:Array<Dynamic>;
+	public var maskStack:Array<DisplayObject>;
 	public var reverse:Bool;
 	public var stencilStack:Array<GLGraphicsData>;
 	
-	public var bucketStack:Array<GLBucket>;
+	// starts at 1 because 0 is the default
+	public var stencilMask:Int = 1;
 	
 	
 	public function new (gl:GLRenderContext) {
 		
+		maskStack = [];
 		stencilStack = [];
-		bucketStack = [];
 		setContext (gl);
 		reverse = true;
 		count = 0;
@@ -51,22 +54,19 @@ class StencilManager {
 		gl.bindBuffer (gl.ELEMENT_ARRAY_BUFFER, fill.indexBuffer);
 	}
 	
-	public function pushBucket (bucket:GLBucket, renderSession:RenderSession, projection:Point, translationMatrix:Float32Array):Void {
+	public function pushBucket (bucket:GLBucket, renderSession:RenderSession, projection:Point, translationMatrix:Float32Array, ?isMask:Bool = false):Void {
 		
-		if (bucketStack.length == 0) {
+		if(!isMask) {
 			gl.enable(gl.STENCIL_TEST);
 			gl.clear(gl.STENCIL_BUFFER_BIT);
 			gl.stencilMask(0xFF);
+			
+			gl.colorMask(false, false, false, false);
+			gl.stencilFunc(gl.NEVER, 0x01, 0xFF);
+			gl.stencilOp(gl.INVERT, gl.KEEP, gl.KEEP);
+		
+			gl.clear(gl.STENCIL_BUFFER_BIT);
 		}
-		
-		bucketStack.push(bucket);
-		
-		gl.colorMask(false, false, false, false);
-		gl.stencilFunc(gl.NEVER, 0x01, 0xFF);
-		gl.stencilOp(gl.INVERT, gl.KEEP, gl.KEEP);
-		
-		
-		gl.clear(gl.STENCIL_BUFFER_BIT);
 		
 		for (fill in bucket.fills) {
 			if (fill.available) continue;
@@ -74,15 +74,68 @@ class StencilManager {
 			gl.drawElements (fill.drawMode, fill.glIndices.length, gl.UNSIGNED_SHORT, 0);
 		}
 		
-		gl.colorMask(true, true, true, renderSession.renderer.transparent);
-		gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
-		gl.stencilFunc(gl.EQUAL, 0xFF, 0xFF);
+		
+		if(!isMask) {
+			gl.colorMask(true, true, true, renderSession.renderer.transparent);
+			gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+			gl.stencilFunc(gl.EQUAL, 0xFF, 0xFF);
+		}
 	}
 	
 	public function popBucket (object:DisplayObject, bucket:GLBucket, renderSession:RenderSession):Void {
-		bucketStack.pop();
-		if (bucketStack.length == 0) {
-			gl.disable(gl.STENCIL_TEST);
+		gl.disable(gl.STENCIL_TEST);
+	}
+	
+	public function pushMask(object:DisplayObject, renderSession:RenderSession) {
+		
+		if (!object.__isMask) return;
+		// TODO add the bitmap rectangle to this if any
+		var dirty = object.__graphics.__dirty;
+		if (dirty) {
+			GraphicsRenderer.updateGraphics(object, renderSession.gl, false);
+		}
+		
+		if (maskStack.length == 0) {
+			gl.enable(gl.STENCIL_TEST);
+			gl.clear(gl.STENCIL_BUFFER_BIT);
+		}
+		
+		maskStack.push(object);
+		
+		gl.stencilMask(stencilMask);
+		gl.colorMask(false, false, false, false);
+		gl.stencilFunc(gl.NEVER, stencilMask, 0xFF);
+		gl.stencilOp(gl.REPLACE, gl.REPLACE, gl.REPLACE);
+		
+		// for each bucket in the object, draw it to the stencil buffer
+		var glStack = object.__graphics.__glStack[GLRenderer.glContextId];
+		var bucket:GLBucket;
+		for (i in 0...glStack.buckets.length) {
+			bucket = glStack.buckets[i];
+			switch(bucket.mode) {
+				case Fill, PatternFill:
+					pushBucket(bucket, renderSession, renderSession.projection, object.__worldTransform.toArray(true), true);
+				case _:
+			}
+		}
+		
+		
+		gl.colorMask(true, true, true, renderSession.renderer.transparent);
+		gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+		gl.stencilFunc(gl.LEQUAL, stencilMask, 0xFF);
+		
+		stencilMask++;
+	}
+	
+	public function popMask(object:DisplayObject, renderSession:RenderSession) {
+		if (!object.__isMask) return;
+		maskStack.pop();
+		
+		if (maskStack.length == 0) {
+			gl.disable (gl.STENCIL_TEST);
+			stencilMask = 1;
+		} else {
+			stencilMask--;
 		}
 	}
 	
@@ -145,7 +198,6 @@ class StencilManager {
 	public function destroy ():Void {
 		
 		stencilStack = null;
-		bucketStack = null;
 		gl = null;
 		
 	}

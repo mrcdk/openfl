@@ -1286,6 +1286,12 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			
 		}
 		
+		
+		if (__mask != null) {
+			
+			__mask.__update(transformOnly, updateChildren);
+			
+		}
 	}
 	
 	

@@ -56,12 +56,12 @@ class ColorTransform {
 		
 	}
 	
-	@:noCompletion private function __equals (ct:ColorTransform):Bool {
+	@:noCompletion private function __equals (ct:ColorTransform, ?skipAlphaMultiplier:Bool = false):Bool {
 		return ( ct != null &&
 			redMultiplier == ct.redMultiplier &&
 			greenMultiplier == ct.greenMultiplier &&
 			blueMultiplier == ct.blueMultiplier &&
-			alphaMultiplier == ct.alphaMultiplier &&
+			(skipAlphaMultiplier || alphaMultiplier == ct.alphaMultiplier) &&
 			
 			redOffset == ct.redOffset &&
 			greenOffset == ct.greenOffset &&

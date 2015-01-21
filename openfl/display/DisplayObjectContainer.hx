@@ -1,6 +1,7 @@
 package openfl.display; #if !flash #if (display || openfl_next || js)
 
 
+import openfl._internal.renderer.opengl.utils.GraphicsRenderer;
 import openfl._internal.renderer.RenderSession;
 import openfl.display.Stage;
 import openfl.errors.RangeError;
@@ -813,10 +814,41 @@ class DisplayObjectContainer extends InteractiveObject {
 		
 		if (!__renderable || __worldAlpha <= 0) return;
 		
+		if (__mask != null) {
+			renderSession.spriteBatch2.stop();
+			renderSession.maskManager.pushMask(__mask, renderSession);
+			if (Std.is(__mask, DisplayObjectContainer)) {
+				var container = cast (__mask, DisplayObjectContainer);
+				for(child in container.__children) {
+					renderSession.maskManager.pushMask(child, renderSession);
+				}
+			}
+
+			renderSession.spriteBatch2.start();
+		}
+		
+		if (__graphics != null) {
+			
+			GraphicsRenderer.render (this, renderSession);
+			
+		}
+		
 		for (child in __children) {
 			
 			child.__renderGL (renderSession);
 			
+		}
+		
+		if (__mask != null) {
+			renderSession.spriteBatch2.stop();
+			renderSession.maskManager.popMask(__mask, renderSession);
+			if (Std.is(__mask, DisplayObjectContainer)) {
+				var container = cast (__mask, DisplayObjectContainer);
+				for(child in container.__children) {
+					renderSession.maskManager.popMask(child, renderSession);
+				}
+			}
+			renderSession.spriteBatch2.start();
 		}
 		
 		__removedChildren = [];

@@ -12,6 +12,7 @@ import openfl.display.CapsStyle;
 import openfl.display.DisplayObject;
 import openfl.display.Graphics;
 import openfl.display.GraphicsPathCommand;
+import openfl.display.GraphicsPathWinding;
 import openfl.display.JointStyle;
 import openfl.display.LineScaleMode;
 import openfl.display.TriangleCulling;
@@ -27,6 +28,7 @@ class DrawPath {
 	public var fill:FillType;
 	public var fillIndex:Int = 0;
 	public var isRemovable:Bool = true;
+	public var winding:WindingRule = WindingRule.EVEN_ODD;
 
 	public var points:Array<Float> = [];
 
@@ -38,10 +40,11 @@ class DrawPath {
 		fill = None;
 	}
 
-	public function update(line:LineStyle, fill:FillType, fillIndex:Int):Void {
+	public function update(line:LineStyle, fill:FillType, fillIndex:Int, winding:WindingRule):Void {
 		updateLine(line);
 		this.fill = fill;
 		this.fillIndex = fillIndex;
+		this.winding = winding;
 	}
 
 	public function updateLine(line:LineStyle):Void {
@@ -65,6 +68,7 @@ class DrawPath {
 class PathBuiler {
 
 	private static var __currentPath:DrawPath;
+	private static var __currentWinding:WindingRule = WindingRule.EVEN_ODD;
 	private static var __drawPaths:Array<DrawPath>;
 	private static var __line:LineStyle;
 	private static var __fill:FillType;
@@ -98,7 +102,7 @@ class PathBuiler {
 		
 		graphicDataPop ();
 		__currentPath = new DrawPath ();
-		__currentPath.update(__line, __fill, __fillIndex);
+		__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 		__currentPath.type = Polygon;
 		__currentPath.points.push (x);
 		__currentPath.points.push (y);
@@ -238,7 +242,7 @@ class PathBuiler {
 						if (__currentPath.points.length == 0) {
 							graphicDataPop();
 							__currentPath = new DrawPath();
-							__currentPath.update(__line, __fill, __fillIndex);
+							__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 							__currentPath.points = [];
 							__currentPath.type = Polygon;
 							__drawPaths.push(__currentPath);
@@ -252,7 +256,7 @@ class PathBuiler {
 						if (__currentPath.points.length == 0) {
 							graphicDataPop();
 							__currentPath = new DrawPath();
-							__currentPath.update(__line, __fill, __fillIndex);
+							__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 							__currentPath.points = [];
 							__currentPath.type = Polygon;
 							__drawPaths.push(__currentPath);
@@ -271,7 +275,7 @@ class PathBuiler {
 						graphicDataPop ();
 						
 						__currentPath = new DrawPath ();
-						__currentPath.update(__line, __fill, __fillIndex);
+						__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 						__currentPath.type = Circle;
 						__currentPath.points = [ x, y, radius ];
 						
@@ -282,7 +286,7 @@ class PathBuiler {
 						graphicDataPop ();
 						
 						__currentPath = new DrawPath ();
-						__currentPath.update(__line, __fill, __fillIndex);
+						__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 						__currentPath.type = Ellipse;
 						__currentPath.points = [ x, y, width, height ];
 						
@@ -293,7 +297,7 @@ class PathBuiler {
 						graphicDataPop();
 						
 						__currentPath = new DrawPath ();
-						__currentPath.update(__line, __fill, __fillIndex);
+						__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 						__currentPath.type = Rectangle (false);
 						__currentPath.points = [ x, y, width, height ];
 						
@@ -312,7 +316,7 @@ class PathBuiler {
 						graphicDataPop ();
 						
 						__currentPath = new DrawPath ();
-						__currentPath.update(__line, __fill, __fillIndex);
+						__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 						__currentPath.type = Rectangle (true);
 						__currentPath.points = [ x, y, width, height, rx, ry ];
 						
@@ -350,7 +354,7 @@ class PathBuiler {
 						__line.miterLimit = miterLimit;
 						
 						__currentPath = new DrawPath ();
-						__currentPath.update(__line, __fill, __fillIndex);
+						__currentPath.update(__line, __fill, __fillIndex, __currentWinding);
 						__currentPath.points = [];
 						__currentPath.type = GraphicType.Polygon;
 						
@@ -375,7 +379,7 @@ class PathBuiler {
 						graphicDataPop ();
 						
 						__currentPath = new DrawPath ();
-						__currentPath.update (__line, __fill, __fillIndex);
+						__currentPath.update (__line, __fill, __fillIndex, __currentWinding);
 						if (uvtData == null) {
 							uvtData = new Vector<Float>();
 							switch(__fill) {
@@ -396,7 +400,7 @@ class PathBuiler {
 						
 						__fillIndex++;
 						__currentPath = new DrawPath ();
-						__currentPath.update (__line, __fill, __fillIndex);
+						__currentPath.update (__line, __fill, __fillIndex, __currentWinding);
 						__currentPath.type = GraphicType.DrawTiles(sheet, tileData, smooth, flags, count);
 						__currentPath.isRemovable = false;
 						__drawPaths.push (__currentPath);
@@ -404,6 +408,15 @@ class PathBuiler {
 						
 					case DrawPathC (commands, data, winding):
 						graphicDataPop ();
+						
+						switch(winding) {
+							case GraphicsPathWinding.EVEN_ODD:
+								__currentWinding = EVEN_ODD;
+							case GraphicsPathWinding.NON_ZERO:
+								__currentWinding = NON_ZERO;
+							default:
+								__currentWinding = EVEN_ODD;
+						}
 						
 						var command:Int;
 						var cx:Float, cy:Float;
@@ -453,6 +466,9 @@ class PathBuiler {
 								default:
 							}
 						}
+						
+						__currentWinding = EVEN_ODD;
+						
 					default:
 						
 				}
@@ -493,6 +509,10 @@ class LineStyle {
 
 }
 
+@:enum abstract WindingRule(Int) {
+	var EVEN_ODD = 0;
+	var NON_ZERO = 1;
+}
 
 enum FillType {
 	None;

@@ -603,7 +603,8 @@ private class State {
 				texture == other.texture &&
 				textureSmooth == other.textureSmooth &&
 				blendMode == other.blendMode &&
-				(colorTransform != null && colorTransform.__equals(other.colorTransform))
+				// colorTransform.alphaMultiplier == object.__worldAlpha so we can skip it
+				(colorTransform != null && colorTransform.__equals(other.colorTransform, true))
 		;
 	}
 	

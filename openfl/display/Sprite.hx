@@ -122,18 +122,6 @@ class Sprite extends DisplayObjectContainer {
 		
 		if (!__renderable || __worldAlpha <= 0) return;
 		
-		if (__graphics != null) {
-			
-			GraphicsRenderer.render (this, renderSession);
-			//__graphics.__render (renderSession);
-			
-			/*if (__graphics.__canvas != null) {
-				
-				
-			}*/
-			
-		}
-		
 		super.__renderGL (renderSession);
 		
 	}

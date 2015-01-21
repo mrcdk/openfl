@@ -837,12 +837,13 @@ class GraphicsRenderer {
 						renderSession.spriteBatch2.finish();
 					}
 					var shader = prepareShader(bucket, renderSession, object, projection, null);
-					renderDrawTriangles(bucket, cast shader, renderSession);
+					renderDrawTriangles(bucket, shader, renderSession);
 				case DrawTiles:
 					if (!batchDrawing) {
 						renderSession.spriteBatch2.begin(renderSession);
 					}
-					renderDrawTiles(object, bucket, renderSession);
+					var args = Type.enumParameters(bucket.graphicType);		
+					renderSession.spriteBatch2.renderTiles(object, cast args[0], cast args[1], cast args[2], cast args[3], cast args[4]);
 				case _:
 			}
 			
@@ -1049,12 +1050,6 @@ class GraphicsRenderer {
 		
 		var newShader = renderSession.shaderManager2.setShader(shader);
 		
-		//if (!newShader && lastBucketMode == bucket.mode) {
-			//return shader;
-		//}
-		//
-		//lastBucketMode = bucket.mode;
-		
 		// common uniforms
 		gl.uniform2f (shader.getUniformLocation(DefUniform.OffsetVector), -offset.x, -offset.y);
 		gl.uniform1f (shader.getUniformLocation(DefUniform.Alpha), object.__worldAlpha);
@@ -1101,49 +1096,21 @@ class GraphicsRenderer {
 		gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	}
 	
-	private static function renderDrawTriangles(bucket:GLBucket, shader:DrawTrianglesShader, renderSession:RenderSession) {
+	private static function renderDrawTriangles(bucket:GLBucket, shader:Shader, renderSession:RenderSession) {
 		var gl = renderSession.gl;
 		
 		for (fill in bucket.fills) {
 			if (fill.available) continue;
 			
-			if (bucket.texture == null) {
-				// TODO draw it with color
-			} else {
-				bindTexture(gl, bucket);
-			}
+			bindTexture(gl, bucket);
+			fill.vertexArray.bind();
+			shader.bindVertexArray(fill.vertexArray);
 			
-			bindDrawTrianglesBuffer(gl, shader, fill);
 			gl.drawArrays(gl.TRIANGLES, fill.glStart, fill.glLength);
 		}
 	}
 	
-	private static inline function renderDrawTiles(object:DisplayObject, bucket:GLBucket, renderSession:RenderSession) {
-		var args = Type.enumParameters(bucket.graphicType);		
-		renderSession.spriteBatch2.renderTiles(object, cast args[0], cast args[1], cast args[2], cast args[3], cast args[4]);
-	}
-	
-	private static function bindDrawTrianglesBuffer(gl:GLRenderContext, shader:DrawTrianglesShader, fill:GLBucketData) {
-		//if (lastVertsBuffer == data.vertsBuffer) {
-			//return;
-		//} 
-		//lastVertsBuffer = data.vertsBuffer;
-		
-		fill.vertexArray.bind();
-		shader.bindVertexArray(fill.vertexArray);
-		//var stride =  fill.stride * 4;
-		//gl.vertexAttribPointer (shader.aVertexPosition, 2, gl.FLOAT, false, stride, 0);
-		//gl.vertexAttribPointer (shader.aTextureCoord, 2, gl.FLOAT, false, stride, 2 * 4);
-		//gl.vertexAttribPointer (shader.colorAttribute, 4, gl.FLOAT, false, stride, 4 * 4);
-	}
-	
 	private static function bindTexture(gl:GLRenderContext, bucket:GLBucket) {
-		//if (bucket.texture == lastTexture && bucket.textureRepeat == lastTextureRepeat && bucket.textureSmooth == lastTextureSmooth) {
-			//return;
-		//}
-		//lastTexture = bucket.texture;
-		//lastTextureRepeat = bucket.textureRepeat;
-		//lastTextureSmooth = bucket.textureSmooth;
 		
 		gl.bindTexture(gl.TEXTURE_2D, bucket.texture);
 		
@@ -1163,6 +1130,7 @@ class GraphicsRenderer {
 			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);						
 		}
+		
 	}
 
 	private static inline function isCCW(x1:Float, y1:Float, x2:Float, y2:Float, x3:Float, y3:Float) {
