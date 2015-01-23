@@ -25,9 +25,7 @@ class StencilManager {
 	public var maskStack:Array<DisplayObject>;
 	public var reverse:Bool;
 	public var stencilStack:Array<GLGraphicsData>;
-	
-	// starts at 1 because 0 is the default
-	public var stencilMask:Int = 1;
+	public var stencilMask:Int = 0;
 	
 	
 	public function new (gl:GLRenderContext) {
@@ -88,11 +86,14 @@ class StencilManager {
 	
 	public function pushMask(object:DisplayObject, renderSession:RenderSession) {
 		
-		if (!object.__isMask) return;
+		if (object.__isMask) {
+			stencilMask++;
+		} 
+		
 		// TODO add the bitmap rectangle to this if any
 		var dirty = object.__graphics.__dirty;
 		if (dirty) {
-			GraphicsRenderer.updateGraphics(object, renderSession.gl, false);
+			GraphicsRenderer.updateGraphics(object, renderSession.gl);
 		}
 		
 		if (maskStack.length == 0) {
@@ -102,10 +103,10 @@ class StencilManager {
 		
 		maskStack.push(object);
 		
-		gl.stencilMask(stencilMask);
+		gl.stencilMask(0xFF);
 		gl.colorMask(false, false, false, false);
 		gl.stencilFunc(gl.NEVER, stencilMask, 0xFF);
-		gl.stencilOp(gl.REPLACE, gl.REPLACE, gl.REPLACE);
+		gl.stencilOp(gl.REPLACE, gl.KEEP, gl.KEEP);
 		
 		// for each bucket in the object, draw it to the stencil buffer
 		var glStack = object.__graphics.__glStack[GLRenderer.glContextId];
@@ -123,19 +124,18 @@ class StencilManager {
 		gl.colorMask(true, true, true, renderSession.renderer.transparent);
 		gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
 		gl.stencilFunc(gl.LEQUAL, stencilMask, 0xFF);
-		
-		stencilMask++;
 	}
 	
 	public function popMask(object:DisplayObject, renderSession:RenderSession) {
-		if (!object.__isMask) return;
-		maskStack.pop();
 		
+		if (object.__isMask) {
+			stencilMask--;
+		}
+		
+		maskStack.pop();
 		if (maskStack.length == 0) {
 			gl.disable (gl.STENCIL_TEST);
-			stencilMask = 1;
-		} else {
-			stencilMask--;
+			stencilMask = 0;
 		}
 	}
 	

@@ -3,6 +3,7 @@ package openfl.display; #if !flash #if (display || openfl_next || js)
 
 import openfl._internal.renderer.opengl.utils.GraphicsRenderer;
 import openfl._internal.renderer.RenderSession;
+import openfl.display.DisplayObject;
 import openfl.display.Stage;
 import openfl.errors.RangeError;
 import openfl.events.Event;
@@ -819,7 +820,7 @@ class DisplayObjectContainer extends InteractiveObject {
 			renderSession.maskManager.pushMask(__mask, renderSession);
 			if (Std.is(__mask, DisplayObjectContainer)) {
 				var container = cast (__mask, DisplayObjectContainer);
-				for(child in container.__children) {
+				for (child in container.__children) {
 					renderSession.maskManager.pushMask(child, renderSession);
 				}
 			}
@@ -841,13 +842,13 @@ class DisplayObjectContainer extends InteractiveObject {
 		
 		if (__mask != null) {
 			renderSession.spriteBatch2.stop();
-			renderSession.maskManager.popMask(__mask, renderSession);
 			if (Std.is(__mask, DisplayObjectContainer)) {
 				var container = cast (__mask, DisplayObjectContainer);
 				for(child in container.__children) {
 					renderSession.maskManager.popMask(child, renderSession);
 				}
 			}
+			renderSession.maskManager.popMask(__mask, renderSession);
 			renderSession.spriteBatch2.start();
 		}
 		
@@ -899,7 +900,8 @@ class DisplayObjectContainer extends InteractiveObject {
 		
 		super.__update (transformOnly, updateChildren);
 		
-		if (!__renderable #if dom && !__worldAlphaChanged && !__worldClipChanged && !__worldTransformChanged && !__worldVisibleChanged #end) {
+		// nested objects into a mask are non renderables nor a mask but they need to be updated
+		if (!__renderable && !__isMask #if dom && !__worldAlphaChanged && !__worldClipChanged && !__worldTransformChanged && !__worldVisibleChanged #end) {
 			
 			return;
 			
