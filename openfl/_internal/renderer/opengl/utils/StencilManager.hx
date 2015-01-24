@@ -22,7 +22,6 @@ class StencilManager {
 	
 	public var count:Int;
 	public var gl:GLRenderContext;
-	public var maskStack:Array<DisplayObject>;
 	public var reverse:Bool;
 	public var stencilStack:Array<GLGraphicsData>;
 	public var stencilMask:Int = 0;
@@ -30,7 +29,6 @@ class StencilManager {
 	
 	public function new (gl:GLRenderContext) {
 		
-		maskStack = [];
 		stencilStack = [];
 		setContext (gl);
 		reverse = true;
@@ -86,6 +84,11 @@ class StencilManager {
 	
 	public function pushMask(object:DisplayObject, renderSession:RenderSession) {
 		
+		if (stencilMask == 0) {
+			gl.enable(gl.STENCIL_TEST);
+			gl.clear(gl.STENCIL_BUFFER_BIT);
+		}
+		
 		if (object.__isMask) {
 			stencilMask++;
 		} 
@@ -95,13 +98,6 @@ class StencilManager {
 		if (dirty) {
 			GraphicsRenderer.updateGraphics(object, renderSession.gl);
 		}
-		
-		if (maskStack.length == 0) {
-			gl.enable(gl.STENCIL_TEST);
-			gl.clear(gl.STENCIL_BUFFER_BIT);
-		}
-		
-		maskStack.push(object);
 		
 		gl.stencilMask(0xFF);
 		gl.colorMask(false, false, false, false);
@@ -132,8 +128,7 @@ class StencilManager {
 			stencilMask--;
 		}
 		
-		maskStack.pop();
-		if (maskStack.length == 0) {
+		if (stencilMask <= 0) {
 			gl.disable (gl.STENCIL_TEST);
 			stencilMask = 0;
 		}
