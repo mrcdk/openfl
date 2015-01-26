@@ -7,10 +7,12 @@ import openfl._internal.renderer.opengl.shaders2.*;
 import openfl._internal.renderer.opengl.shaders2.FillShader.FillUniform;
 import openfl._internal.renderer.opengl.utils.GraphicsRenderer;
 import openfl._internal.renderer.RenderSession;
+import openfl.display.Bitmap;
 import openfl.geom.Matrix;
 import openfl.display.Graphics;
 import openfl.display.DisplayObject;
 import openfl.geom.Point;
+import openfl.geom.Rectangle;
 
 @:access(openfl.display.DisplayObject)
 @:access(openfl.display.Graphics)
@@ -93,11 +95,35 @@ class StencilManager {
 			stencilMask++;
 		} 
 		
-		// TODO add the bitmap rectangle to this if any
-		var dirty = object.__graphics.__dirty;
-		if (dirty) {
-			GraphicsRenderer.updateGraphics(object, renderSession.gl);
+		// TODO move this to an update function
+		var maskGraphics:Graphics = object.__maskingGraphics;
+		if (maskGraphics == null) {
+			maskGraphics = object.__maskingGraphics = new Graphics();
 		}
+		
+		maskGraphics.clear();
+		
+		if (object.__graphics != null && object.__graphics.__dirty) {
+			maskGraphics.copyFrom(object.__graphics);
+		}
+		
+		
+		// add the bitmap bounds to the maskGraphics if the object is a bitmap
+		if (Std.is(object, Bitmap)) {
+			var bounds = new Rectangle();
+			object.__getBounds(bounds, null);
+			// add a fake fill
+			maskGraphics.beginFill(0);
+			maskGraphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+		}
+		
+		
+		
+		if (maskGraphics == null || maskGraphics.__commands.length <= 0) {
+			return;
+		}
+		
+		GraphicsRenderer.updateGraphics(object, maskGraphics, renderSession.gl);
 		
 		gl.stencilMask(0xFF);
 		gl.colorMask(false, false, false, false);
@@ -105,7 +131,7 @@ class StencilManager {
 		gl.stencilOp(gl.REPLACE, gl.KEEP, gl.KEEP);
 		
 		// for each bucket in the object, draw it to the stencil buffer
-		var glStack = object.__graphics.__glStack[GLRenderer.glContextId];
+		var glStack = maskGraphics.__glStack[GLRenderer.glContextId];
 		var bucket:GLBucket;
 		for (i in 0...glStack.buckets.length) {
 			bucket = glStack.buckets[i];

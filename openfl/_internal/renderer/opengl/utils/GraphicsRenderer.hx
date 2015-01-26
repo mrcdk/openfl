@@ -759,7 +759,7 @@ class GraphicsRenderer {
 		}
 		
 		if (dirty) {
-			updateGraphics (object, renderSession.gl, object.cacheAsBitmap);
+			updateGraphics (object, object.__graphics, renderSession.gl, object.cacheAsBitmap);
 		}
 		
 		//TODO find a way to remove drawTiles calls
@@ -881,9 +881,8 @@ class GraphicsRenderer {
 		}
 	}
 
-	public static function updateGraphics (object:DisplayObject, gl:GLRenderContext, ?localCoords:Bool = false):Void {
+	public static function updateGraphics (object:DisplayObject, graphics:Graphics, gl:GLRenderContext, ?localCoords:Bool = false):Void {
 		
-		var graphics = object.__graphics;
 		objectPosition.setTo(object.x, object.y);
 		if (graphics.__bounds == null) {
 			objectBounds = new Rectangle();

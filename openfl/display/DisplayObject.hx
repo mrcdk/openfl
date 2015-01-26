@@ -704,6 +704,7 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	
 	@:noCompletion private var __filters:Array<BitmapFilter>;
 	@:noCompletion private var __graphics:Graphics;
+	@:noCompletion private var __maskingGraphics:Graphics;
 	@:noCompletion private var __interactive:Bool;
 	@:noCompletion private var __isMask:Bool;
 	@:noCompletion private var __mask:DisplayObject;
