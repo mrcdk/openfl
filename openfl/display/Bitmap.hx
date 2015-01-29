@@ -14,6 +14,7 @@ import js.html.ImageElement;
 #end
 
 @:access(openfl.display.BitmapData)
+@:access(openfl.display.Graphics)
 
 
 /**
@@ -166,6 +167,22 @@ class Bitmap extends DisplayObjectContainer {
 	@:noCompletion @:dox(hide) public override function __renderMask (renderSession:RenderSession):Void {
 		
 		renderSession.context.rect (0, 0, width, height);
+		
+	}
+	
+	@:noCompletion @:dox(hide) public override function __updateMask (maskGraphics:Graphics):Void {
+
+		maskGraphics.__commands.push(OverrideMatrix(this.__worldTransform));
+		maskGraphics.beginFill(0);
+		maskGraphics.drawRect(0, 0, bitmapData.width, bitmapData.height);
+
+		if (maskGraphics.__bounds == null) {
+			maskGraphics.__bounds = new Rectangle();
+		}
+		
+		__getBounds(maskGraphics.__bounds, @:privateAccess Matrix.__identity);
+		
+		super.__updateMask(maskGraphics);
 		
 	}
 	

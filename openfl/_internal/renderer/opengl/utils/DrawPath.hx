@@ -469,6 +469,14 @@ class PathBuiler {
 						
 						__currentWinding = EVEN_ODD;
 						
+					case OverrideMatrix(m):
+						graphicDataPop ();
+						
+						__currentPath = new DrawPath ();
+						__currentPath.update (__line, __fill, __fillIndex, __currentWinding);
+						__currentPath.type = GraphicType.OverrideMatrix(m);
+						__currentPath.isRemovable = false;
+						__drawPaths.push (__currentPath);
 					default:
 						
 				}

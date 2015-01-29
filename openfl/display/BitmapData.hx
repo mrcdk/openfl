@@ -1688,6 +1688,12 @@ class BitmapData implements IBitmapDrawable {
 		
 	}
 	
+	@:noCompletion @:dox(hide) public function __updateMask (maskGraphics:Graphics):Void {
+		
+		
+		
+	}
+	
 	
 	@:noCompletion private function __sync ():Void {
 		

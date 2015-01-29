@@ -70,6 +70,7 @@ class GraphicsRenderer {
 	private static var lastTexture:GLTexture;
 	private static var lastTextureRepeat:Bool;
 	private static var lastTextureSmooth:Bool;
+	private static var overrideMatrix:Matrix;
 	
 	public static function buildCircle (path:DrawPath, glStack:GLStack, localCoords:Bool = false):Void {
 		var rectData = path.points;
@@ -823,6 +824,7 @@ class GraphicsRenderer {
 		for (i in 0...glStack.buckets.length) {
 			batchDrawing = renderSession.spriteBatch2.drawing;
 			bucket = glStack.buckets[i];
+			
 			switch(bucket.mode) {
 				case Fill, PatternFill:
 					if (batchDrawing && !localCoords) {
@@ -896,7 +898,7 @@ class GraphicsRenderer {
 			glStack = DrawPath.getStack(graphics, gl);
 			
 		}
-		
+
 		graphics.__dirty = false;
 		
 		for (data in glStack.buckets) {
@@ -924,6 +926,8 @@ class GraphicsRenderer {
 					buildDrawTriangles(path, object, glStack, localCoords);
 				case DrawTiles(_):
 					buildDrawTiles(path, glStack);
+				case OverrideMatrix(m):
+					overrideMatrix = m;
 				case _:
 			}
 			
@@ -994,6 +998,8 @@ class GraphicsRenderer {
 		}
 		
 		bucket.graphicType = path.type;
+		
+		bucket.overrideMatrix = overrideMatrix;
 		
 		return bucket;
 	}
@@ -1198,6 +1204,8 @@ class GLBucket {
 	public var textureSmooth:Bool = true;
 	public var textureTL:Point;
 	public var textureBR:Point;
+	
+	public var overrideMatrix:Matrix;
 	
 	public var tileBuffer:GLBuffer;
 	public var glTile:Int16Array;
@@ -1675,6 +1683,7 @@ enum GraphicType {
 	Ellipse;
 	DrawTriangles(vertices:Vector<Float>, indices:Vector<Int>, uvtData:Vector<Float>, culling:TriangleCulling, colors:Vector<Int>, blendMode:Int);
 	DrawTiles (sheet:Tilesheet, tileData:Array<Float>, smooth:Bool, flags:Int, count:Int);
+	OverrideMatrix (matrix:Matrix);
 
 }
 

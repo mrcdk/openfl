@@ -86,58 +86,47 @@ class StencilManager {
 	
 	public function pushMask(object:DisplayObject, renderSession:RenderSession) {
 		
+		var maskGraphics:Graphics = object.__maskGraphics;
+		if (maskGraphics == null || maskGraphics.__commands.length <= 0) {
+			return;
+		}
+		
 		if (stencilMask == 0) {
 			gl.enable(gl.STENCIL_TEST);
 			gl.clear(gl.STENCIL_BUFFER_BIT);
 		}
 		
-		if (object.__isMask) {
-			stencilMask++;
-		} 
+		stencilMask++;
 		
-		// TODO move this to an update function
-		var maskGraphics:Graphics = object.__maskingGraphics;
-		if (maskGraphics == null) {
-			maskGraphics = object.__maskingGraphics = new Graphics();
+		if (maskGraphics.__dirty) {
+			GraphicsRenderer.updateGraphics(object, maskGraphics, renderSession.gl);
 		}
 		
-		maskGraphics.clear();
-		
-		if (object.__graphics != null && object.__graphics.__dirty) {
-			maskGraphics.copyFrom(object.__graphics);
-		}
-		
-		
-		// add the bitmap bounds to the maskGraphics if the object is a bitmap
-		if (Std.is(object, Bitmap)) {
-			var bounds = new Rectangle();
-			object.__getBounds(bounds, null);
-			// add a fake fill
-			maskGraphics.beginFill(0);
-			maskGraphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
-		}
-		
-		
-		
-		if (maskGraphics == null || maskGraphics.__commands.length <= 0) {
-			return;
-		}
-		
-		GraphicsRenderer.updateGraphics(object, maskGraphics, renderSession.gl);
+		var func = stencilMask == 1 ? gl.NEVER : gl.EQUAL;
+		var ref = stencilMask;
+		var mask = 0xFF - stencilMask;
 		
 		gl.stencilMask(0xFF);
 		gl.colorMask(false, false, false, false);
-		gl.stencilFunc(gl.NEVER, stencilMask, 0xFF);
+		gl.stencilFunc(func, ref, mask);
 		gl.stencilOp(gl.REPLACE, gl.KEEP, gl.KEEP);
 		
 		// for each bucket in the object, draw it to the stencil buffer
 		var glStack = maskGraphics.__glStack[GLRenderer.glContextId];
 		var bucket:GLBucket;
+		var translationMatrix:Matrix = object.__worldTransform;
 		for (i in 0...glStack.buckets.length) {
 			bucket = glStack.buckets[i];
+			
+			if (bucket.overrideMatrix != null) {
+				translationMatrix = bucket.overrideMatrix;
+			} else {
+				translationMatrix = object.__worldTransform;
+			}
+			
 			switch(bucket.mode) {
 				case Fill, PatternFill:
-					pushBucket(bucket, renderSession, renderSession.projection, object.__worldTransform.toArray(true), true);
+					pushBucket(bucket, renderSession, renderSession.projection, translationMatrix.toArray(true), true);
 				case _:
 			}
 		}
@@ -145,14 +134,17 @@ class StencilManager {
 		
 		gl.colorMask(true, true, true, renderSession.renderer.transparent);
 		gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
-		gl.stencilFunc(gl.LEQUAL, stencilMask, 0xFF);
+		gl.stencilFunc(gl.EQUAL, stencilMask, 0xFF);
 	}
 	
 	public function popMask(object:DisplayObject, renderSession:RenderSession) {
 		
-		if (object.__isMask) {
-			stencilMask--;
+		var maskGraphics:Graphics = object.__maskGraphics;
+		if (maskGraphics == null || maskGraphics.__commands.length <= 0) {
+			return;
 		}
+		
+		stencilMask--;
 		
 		if (stencilMask <= 0) {
 			gl.disable (gl.STENCIL_TEST);

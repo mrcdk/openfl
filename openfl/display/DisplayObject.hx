@@ -24,6 +24,7 @@ import js.html.Element;
 
 @:access(openfl.events.Event)
 @:access(openfl.display.Stage)
+@:access(openfl.display.Graphics)
 @:access(openfl.geom.ColorTransform)
 
 
@@ -704,7 +705,7 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	
 	@:noCompletion private var __filters:Array<BitmapFilter>;
 	@:noCompletion private var __graphics:Graphics;
-	@:noCompletion private var __maskingGraphics:Graphics;
+	@:noCompletion private var __maskGraphics:Graphics;
 	@:noCompletion private var __interactive:Bool;
 	@:noCompletion private var __isMask:Bool;
 	@:noCompletion private var __mask:DisplayObject;
@@ -1117,6 +1118,13 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			
 		}
 		
+		if (parent != null && !parent.__renderDirty) {
+			
+			parent.__renderDirty = true;
+			__worldRenderDirty++;
+			
+		}
+		
 	}
 	
 	
@@ -1132,7 +1140,7 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	}
 	
 	
-	@:noCompletion @:dox(hide) public function __update (transformOnly:Bool, updateChildren:Bool):Void {
+	@:noCompletion @:dox(hide) public function __update (transformOnly:Bool, updateChildren:Bool, ?maskGraphics:Graphics = null):Void {
 		
 		__renderable = (visible && scaleX != 0 && scaleY != 0 && !__isMask);
 		//if (!__renderable && !__isMask) return;
@@ -1199,6 +1207,28 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			
 			__transformDirty = false;
 			__worldTransformDirty--;
+			
+		}
+		
+		// TODO: In flash if the mask isn't in the displaylist, it will be updated only once, consecuent
+		// updates won't affect it. We are updating it everytime it's need to be updated
+		if (!transformOnly && __mask != null) {
+			
+			//trace("Start updating mask");
+			if (__maskGraphics == null) {
+				__maskGraphics = new Graphics();
+			}
+			
+			__maskGraphics.clear();
+			
+			__mask.__update(true, true, __maskGraphics);
+			
+		}
+		
+		if (maskGraphics != null) {
+			
+			//trace("Update mask");
+			__updateMask(maskGraphics);
 			
 		}
 		
@@ -1287,12 +1317,6 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			
 		}
 		
-		
-		if (__mask != null) {
-			
-			__mask.__update(transformOnly, updateChildren);
-			
-		}
 	}
 	
 	
@@ -1311,7 +1335,21 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 		
 	}
 	
-	
+	@:noCompletion @:dox(hide) public function __updateMask (maskGraphics:Graphics):Void {
+		
+		if (__graphics != null) {
+			maskGraphics.__commands.push(OverrideMatrix(this.__worldTransform));
+			maskGraphics.__commands = maskGraphics.__commands.concat(__graphics.__commands);
+			maskGraphics.__dirty = true;
+			maskGraphics.__visible = true;
+			if (maskGraphics.__bounds == null) {
+				maskGraphics.__bounds = new Rectangle();
+			}
+			
+			__graphics.__getBounds(maskGraphics.__bounds, @:privateAccess Matrix.__identity);
+		}
+		
+	}
 	
 	
 	// Get & Set Methods
@@ -1397,8 +1435,16 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	
 	@:noCompletion private function set_mask (value:DisplayObject):DisplayObject {
 		
-		if (value != __mask) __setRenderDirty ();
-		if (__mask != null) __mask.__isMask = false;
+		if (value != __mask) {
+			__setTransformDirty ();
+			__setRenderDirty ();
+		}
+		if (__mask != null) {
+			__mask.__isMask = false;
+			__mask.__setTransformDirty();
+			__mask.__setRenderDirty();
+			__maskGraphics = null;
+		}
 		if (value != null) value.__isMask = true;
 		return __mask = value;
 		

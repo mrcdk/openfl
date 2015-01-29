@@ -19,6 +19,8 @@ interface IBitmapDrawable {
 	function __renderMask (renderSession:RenderSession):Void;
 	function __updateChildren (transformOnly:Bool):Void;
 	
+	function __updateMask (maskGraphics:Graphics):Void;
+	
 }
 
 

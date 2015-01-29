@@ -46,7 +46,7 @@ class Graphics {
 	
 	@:noCompletion private var __bounds:Rectangle;
 	@:noCompletion private var __commands:Array<DrawCommand> = [];
-	@:noCompletion private var __dirty:Bool = true;
+	@:noCompletion private var __dirty(default, set):Bool = true;
 	@:noCompletion private var __glStack:Array<GLStack> = [];
 	@:noCompletion private var __drawPaths:Array<DrawPath>;
 	@:noCompletion private var __halfStrokeWidth:Float;
@@ -54,6 +54,7 @@ class Graphics {
 	@:noCompletion private var __positionY:Float;
 	@:noCompletion private var __visible:Bool = true;
 	@:noCompletion private var __cachedTexture:FilterTexture;
+	@:noCompletion private var __owner:DisplayObject;
 	
 	#if js
 	@:noCompletion private var __canvas:CanvasElement;
@@ -988,6 +989,13 @@ class Graphics {
 	}
 	
 	
+	@:noCompletion private function set___dirty (value:Bool):Bool {
+		if (value && __owner != null) {
+			@:privateAccess __owner.__setRenderDirty();
+		}
+		return __dirty = value;
+	}
+	
 }
 
 
@@ -1008,6 +1016,7 @@ class Graphics {
 	LineTo (x:Float, y:Float);
 	MoveTo (x:Float, y:Float);
 	DrawPathC(commands:Vector<Int>, data:Vector<Float>, winding:GraphicsPathWinding);
+	OverrideMatrix(matrix:Matrix);
 	
 }
 

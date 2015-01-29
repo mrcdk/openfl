@@ -11,6 +11,7 @@ import openfl.geom.Matrix;
 import openfl.geom.Point;
 import openfl.geom.Rectangle;
 
+@:access(openfl.display.Graphics)
 @:access(openfl.events.Event)
 
 
@@ -158,6 +159,7 @@ class DisplayObjectContainer extends InteractiveObject {
 			
 			child.__setTransformDirty ();
 			child.__setRenderDirty ();
+			__setRenderDirty();
 			child.dispatchEvent (new Event (Event.ADDED, true));
 			
 		}
@@ -226,6 +228,7 @@ class DisplayObjectContainer extends InteractiveObject {
 			
 			child.__setTransformDirty ();
 			child.__setRenderDirty ();
+			__setRenderDirty();
 			child.dispatchEvent (new Event (Event.ADDED, true));
 			
 		}
@@ -440,6 +443,7 @@ class DisplayObjectContainer extends InteractiveObject {
 			__removedChildren.push (child);
 			child.__setTransformDirty ();
 			child.__setRenderDirty ();
+			__setRenderDirty();
 			child.dispatchEvent (new Event (Event.REMOVED, true));
 			
 		}
@@ -815,16 +819,13 @@ class DisplayObjectContainer extends InteractiveObject {
 		
 		if (!__renderable || __worldAlpha <= 0) return;
 		
-		if (__mask != null) {
+		var masked = __mask != null && __maskGraphics != null && __maskGraphics.__commands.length > 0;
+		
+		//if(__maskGraphics != null) trace(__maskGraphics.__commands.length);
+		if (masked) {
+			//trace("Masking");
 			renderSession.spriteBatch2.stop();
-			renderSession.maskManager.pushMask(__mask, renderSession);
-			if (Std.is(__mask, DisplayObjectContainer)) {
-				var container = cast (__mask, DisplayObjectContainer);
-				for (child in container.__children) {
-					renderSession.maskManager.pushMask(child, renderSession);
-				}
-			}
-
+			renderSession.maskManager.pushMask(this, renderSession);
 			renderSession.spriteBatch2.start();
 		}
 		
@@ -840,15 +841,9 @@ class DisplayObjectContainer extends InteractiveObject {
 			
 		}
 		
-		if (__mask != null) {
+		if(masked) {
 			renderSession.spriteBatch2.stop();
-			if (Std.is(__mask, DisplayObjectContainer)) {
-				var container = cast (__mask, DisplayObjectContainer);
-				for(child in container.__children) {
-					renderSession.maskManager.popMask(child, renderSession);
-				}
-			}
-			renderSession.maskManager.popMask(__mask, renderSession);
+			renderSession.maskManager.popMask(this, renderSession);
 			renderSession.spriteBatch2.start();
 		}
 		
@@ -865,7 +860,6 @@ class DisplayObjectContainer extends InteractiveObject {
 		renderSession.context.rect (0, 0, bounds.width, bounds.height);	
 		
 	}
-	
 	
 	@:noCompletion private override function __setStageReference (stage:Stage):Void {
 		
@@ -896,9 +890,9 @@ class DisplayObjectContainer extends InteractiveObject {
 	}
 	
 	
-	@:noCompletion @:dox(hide) public override function __update (transformOnly:Bool, updateChildren:Bool):Void {
+	@:noCompletion @:dox(hide) public override function __update (transformOnly:Bool, updateChildren:Bool, ?maskGraphics:Graphics = null):Void {
 		
-		super.__update (transformOnly, updateChildren);
+		super.__update (transformOnly, updateChildren, maskGraphics);
 		
 		// nested objects into a mask are non renderables nor a mask but they need to be updated
 		if (!__renderable && !__isMask #if dom && !__worldAlphaChanged && !__worldClipChanged && !__worldTransformChanged && !__worldVisibleChanged #end) {
@@ -913,7 +907,7 @@ class DisplayObjectContainer extends InteractiveObject {
 			
 			for (child in __children) {
 				
-				child.__update (transformOnly, true);
+				child.__update (transformOnly, true, maskGraphics);
 				
 			}
 			
