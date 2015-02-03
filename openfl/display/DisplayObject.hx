@@ -1119,13 +1119,6 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			
 		}
 		
-		if (parent != null && !parent.__renderDirty) {
-			
-			parent.__renderDirty = true;
-			__worldRenderDirty++;
-			
-		}
-		
 	}
 	
 	

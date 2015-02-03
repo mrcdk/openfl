@@ -159,7 +159,6 @@ class DisplayObjectContainer extends InteractiveObject {
 			
 			child.__setTransformDirty ();
 			child.__setRenderDirty ();
-			__setRenderDirty();
 			child.dispatchEvent (new Event (Event.ADDED, true));
 			
 		}
@@ -228,7 +227,6 @@ class DisplayObjectContainer extends InteractiveObject {
 			
 			child.__setTransformDirty ();
 			child.__setRenderDirty ();
-			__setRenderDirty();
 			child.dispatchEvent (new Event (Event.ADDED, true));
 			
 		}
@@ -443,7 +441,6 @@ class DisplayObjectContainer extends InteractiveObject {
 			__removedChildren.push (child);
 			child.__setTransformDirty ();
 			child.__setRenderDirty ();
-			__setRenderDirty();
 			child.dispatchEvent (new Event (Event.REMOVED, true));
 			
 		}
