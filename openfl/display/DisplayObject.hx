@@ -705,10 +705,11 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	
 	@:noCompletion private var __filters:Array<BitmapFilter>;
 	@:noCompletion private var __graphics:Graphics;
-	@:noCompletion private var __maskGraphics:Graphics;
 	@:noCompletion private var __interactive:Bool;
 	@:noCompletion private var __isMask:Bool;
 	@:noCompletion private var __mask:DisplayObject;
+	@:noCompletion private var __maskGraphics:Graphics;
+	@:noCompletion private var __maskCached:Bool = false;
 	@:noCompletion private var __name:String;
 	@:noCompletion private var __renderable:Bool;
 	@:noCompletion private var __renderDirty:Bool;
@@ -1182,6 +1183,8 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 				
 			}
 			
+			if(__isMask) __maskCached = false;
+			
 		} else {
 			
 			__worldTransform.a = __rotationCosine * scaleX;
@@ -1210,11 +1213,8 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			
 		}
 		
-		// TODO: In flash if the mask isn't in the displaylist, it will be updated only once, consecuent
-		// updates won't affect it. We are updating it everytime it's need to be updated
-		if (!transformOnly && __mask != null) {
+		if (!transformOnly && __mask != null && !__mask.__maskCached) {
 			
-			//trace("Start updating mask");
 			if (__maskGraphics == null) {
 				__maskGraphics = new Graphics();
 			}
@@ -1222,12 +1222,11 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 			__maskGraphics.clear();
 			
 			__mask.__update(true, true, __maskGraphics);
-			
+			__mask.__maskCached = true;
 		}
 		
 		if (maskGraphics != null) {
 			
-			//trace("Update mask");
 			__updateMask(maskGraphics);
 			
 		}
@@ -1441,6 +1440,7 @@ class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 		}
 		if (__mask != null) {
 			__mask.__isMask = false;
+			__mask.__maskCached = false;
 			__mask.__setTransformDirty();
 			__mask.__setRenderDirty();
 			__maskGraphics = null;
