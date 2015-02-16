@@ -167,7 +167,7 @@ class SpriteBatch2 {
 		var index = batchedSprites * 4 * elementsPerVertex;
 		fillVertices(index, bitmapData.width, bitmapData.height, matrix, uvs, null, color);
 		
-		setState(batchedSprites, texture, blendMode, ct);
+		setState(batchedSprites, texture, blendMode, ct, true);
 		
 		batchedSprites++;
 	}
@@ -330,7 +330,7 @@ class SpriteBatch2 {
 				
 				fillVertices(bIndex, rect.width, rect.height, matrix, uvs, null, color);
 				
-				setState(batchedSprites, texture, smooth, blendMode, object.__worldColorTransform);
+				setState(batchedSprites, texture, smooth, blendMode, object.__worldColorTransform, false);
 				
 				batchedSprites++;
 			}
@@ -483,10 +483,11 @@ class SpriteBatch2 {
 		currentState.textureSmooth = false;
 		currentState.blendMode = renderSession.blendModeManager.currentBlendMode;
 		currentState.colorTransform = null;
+		currentState.skipColorTransformAlpha = false;
 		
 		for (i in 0...batchedSprites) {
 			nextState = states[i];
-			
+			currentState.skipColorTransformAlpha = nextState.skipColorTransformAlpha;
 			if (!nextState.equals(currentState)) {
 				renderBatch(currentState, batchSize, start);
 				
@@ -529,7 +530,7 @@ class SpriteBatch2 {
 		if (state.colorTransform != null) {
 			var ct = state.colorTransform;
 			gl.uniform4f(shader.getUniformLocation(DefUniform.ColorMultiplier),
-						ct.redMultiplier, ct.greenMultiplier, ct.blueMultiplier, ct.alphaMultiplier);
+						ct.redMultiplier, ct.greenMultiplier, ct.blueMultiplier, state.skipColorTransformAlpha ? 1 : ct.alphaMultiplier);
 			gl.uniform4f(shader.getUniformLocation(DefUniform.ColorOffset),
 						ct.redOffset / 255., ct.greenOffset / 255., ct.blueOffset / 255., ct.alphaOffset / 255.);
 		} else {
@@ -554,7 +555,7 @@ class SpriteBatch2 {
 		
 	}
 	
-	function setState(index:Int, texture:GLTexture, ?smooth:Bool = false, ?blendMode:BlendMode, ?colorTransform:ColorTransform) {
+	function setState(index:Int, texture:GLTexture, ?smooth:Bool = false, ?blendMode:BlendMode, ?colorTransform:ColorTransform, ?skipAlpha:Bool = false) {
 		var state:State = states[index];
 		if (state == null) {
 			state = states[index] = new State();
@@ -563,6 +564,7 @@ class SpriteBatch2 {
 		state.textureSmooth = smooth;
 		state.blendMode = blendMode;
 		state.colorTransform = colorTransform;
+		state.skipColorTransformAlpha = skipAlpha;
 	}
 	
 	public function setContext(gl:GLRenderContext) {
@@ -594,6 +596,7 @@ private class State {
 	public var textureSmooth:Bool = true;
 	public var blendMode:BlendMode;
 	public var colorTransform:ColorTransform;
+	public var skipColorTransformAlpha:Bool = false;
 	public var shader:Shader;
 	
 	public function new() { }
@@ -604,7 +607,7 @@ private class State {
 				textureSmooth == other.textureSmooth &&
 				blendMode == other.blendMode &&
 				// colorTransform.alphaMultiplier == object.__worldAlpha so we can skip it
-				(colorTransform != null && colorTransform.__equals(other.colorTransform, true))
+				(colorTransform != null && colorTransform.__equals(other.colorTransform, skipColorTransformAlpha))
 		;
 	}
 	
