@@ -850,28 +850,50 @@ class DisplayObjectContainer extends InteractiveObject {
 		
 		if (!__renderable || __worldAlpha <= 0) return;
 		
-		var masked = __mask != null && __maskGraphics != null && __maskGraphics.__commands.length > 0;
-		
-		if (masked) {
+		if (__cacheAsBitmap) {
 			
-			renderSession.spriteBatch.stop ();
-			renderSession.maskManager.pushMask (this, renderSession);
-			renderSession.spriteBatch.start ();
+			if (__updateCache) {
+				
+				var bounds = new Rectangle();
+				__getBounds(bounds, @:privateAccess Matrix.__identity);
+				
+				if (__cachedBitmap == null) {
+					__cachedBitmap = new BitmapData(0, 0);
+				}
+				
+				__cachedBitmap.__drawGL(renderSession, Math.floor(bounds.width), Math.floor(bounds.height), this, false, false, true, false);
+				
+				__updateCache = false;
+			}
 			
-		}
-		
-		super.__renderGL (renderSession);
-		
-		for (child in __children) {
+			renderSession.spriteBatch.renderBitmapData(__cachedBitmap, true, __worldTransform, __worldColorTransform, __worldAlpha, blendMode);
 			
-			child.__renderGL (renderSession);
+		} else {
 			
-		}
-		
-		if(masked) {
-			renderSession.spriteBatch.stop();
-			renderSession.maskManager.popMask(this, renderSession);
-			renderSession.spriteBatch.start();
+			var masked = __mask != null && __maskGraphics != null && __maskGraphics.__commands.length > 0;
+			
+			if (masked) {
+				
+				renderSession.spriteBatch.stop ();
+				renderSession.maskManager.pushMask (this, renderSession);
+				renderSession.spriteBatch.start ();
+				
+			}
+			
+			super.__renderGL (renderSession);
+			
+			for (child in __children) {
+				
+				child.__renderGL (renderSession);
+				
+			}
+			
+			if(masked) {
+				renderSession.spriteBatch.stop();
+				renderSession.maskManager.popMask(this, renderSession);
+				renderSession.spriteBatch.start();
+			}
+			
 		}
 		
 		__removedChildren = [];

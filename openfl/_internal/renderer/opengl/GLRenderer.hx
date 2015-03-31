@@ -123,6 +123,8 @@ class GLRenderer extends AbstractRenderer {
 		renderSession.projection = projection;
 		renderSession.offset = offset;
 		
+		renderSession.defaultFramebuffer = defaultFramebuffer;
+		
 		shaderManager.setShader(shaderManager.defaultShader);
 		
 		gl.disable (gl.DEPTH_TEST);
@@ -228,6 +230,8 @@ class GLRenderer extends AbstractRenderer {
 		#else
 		defaultFramebuffer = null;
 		#end
+		
+		renderSession.defaultFramebuffer = defaultFramebuffer;
 		
 		gl.disable (gl.DEPTH_TEST);
 		gl.disable (gl.CULL_FACE);

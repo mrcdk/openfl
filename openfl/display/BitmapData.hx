@@ -133,6 +133,7 @@ class BitmapData implements IBitmapDrawable {
 	@:noCompletion @:dox(hide) public var blendMode:BlendMode;
 	@:noCompletion @:dox(hide) public var __worldTransform:Matrix;
 	@:noCompletion @:dox(hide) public var __worldColorTransform:ColorTransform;
+	@:noCompletion @:dox(hide) public var __cacheAsBitmap:Bool;
 	
 	@:noCompletion private var __buffer:GLBuffer;
 	@:noCompletion private var __image:Image;
@@ -141,8 +142,6 @@ class BitmapData implements IBitmapDrawable {
 	@:noCompletion private var __textureImage:Image;
 	@:noCompletion private var __framebuffer:FilterTexture;
 	@:noCompletion private var __uvData:TextureUvs;
-	
-	private var __spritebatch:SpriteBatch;
 	
 	/**
 	 * Creates a BitmapData object with a specified width and height. If you specify a value for 
@@ -429,6 +428,22 @@ class BitmapData implements IBitmapDrawable {
 		rect = null;
 		__isValid = false;
 		
+		if (__texture != null) {
+			
+			var renderSession = @:privateAccess Lib.current.stage.__renderer.renderSession;
+			var gl:GLRenderContext = renderSession.gl;
+			if (gl != null) {
+				gl.deleteTexture(__texture);
+			}
+			
+		}
+		
+		if (__framebuffer != null) {
+			
+			__framebuffer.destroy();
+			
+		}
+		
 	}
 	
 	
@@ -550,86 +565,9 @@ class BitmapData implements IBitmapDrawable {
 				
 			case DATA:
 				
+				
 				var renderSession = @:privateAccess Lib.current.stage.__renderer.renderSession;
-				var gl:GLRenderContext = renderSession.gl;
-				if (gl == null) return;
-				
-				
-				var mainSpritebatch = renderSession.spriteBatch;
-				var mainProjection = renderSession.projection;
-				
-				if (clipRect == null) {
-					clipRect = new Rectangle(0, 0, width, height);
-				}
-				var tmpRect = clipRect.clone();
-				// Flip Y
-				tmpRect.y = height - tmpRect.bottom;
-
-				var drawSelf = false;
-				if (__spritebatch == null) {
-					__spritebatch = new SpriteBatch(gl);
-					drawSelf = true;
-				}
-				
-				renderSession.spriteBatch = __spritebatch;
-				renderSession.projection = new Point((width / 2), -(height / 2));
-				
-				if (__framebuffer == null) {
-					__framebuffer = new FilterTexture(gl, width, height, smoothing);
-				}
-				
-				__framebuffer.resize(width, height);
-				gl.bindFramebuffer(gl.FRAMEBUFFER, __framebuffer.frameBuffer);
-				
-				gl.viewport (0, 0, width, height);
-				
-				__spritebatch.begin(renderSession, drawSelf ? null : tmpRect);
-				
-				// enable writing to all the colors and alpha
-				gl.colorMask(true, true, true, true);
-				renderSession.blendModeManager.setBlendMode(BlendMode.NORMAL);
-				
-				if (drawSelf) {
-					__framebuffer.clear();
-					this.__renderGL(renderSession);
-					__spritebatch.stop();
-					// TODO remove the bitmap texture from vram when done?
-					__spritebatch.start(tmpRect);
-				}
-				
-				var ctCache = source.__worldColorTransform;
-				var matrixCache = source.__worldTransform;
-				var blendModeCache = source.blendMode;
-				
-				source.__worldTransform = matrix != null ? matrix : new Matrix ();
-				source.__worldColorTransform = colorTransform != null ? colorTransform : new ColorTransform();
-				source.blendMode = blendMode;
-				source.__updateChildren (false);
-				
-				source.__renderGL (renderSession);
-				
-				source.__worldColorTransform = ctCache;
-				source.__worldTransform = matrixCache;
-				source.blendMode = blendModeCache;
-				source.__updateChildren (true);
-				
-				__spritebatch.finish();
-				
-				gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, __image.buffer.data);
-				
-				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-				
-				gl.viewport(0, 0, renderSession.renderer.width, renderSession.renderer.height);
-				
-				renderSession.spriteBatch = mainSpritebatch;
-				renderSession.projection = mainProjection;
-				
-				gl.colorMask(true, true, true, renderSession.renderer.transparent);
-				
-				__texture = __framebuffer.texture;
-				__image.dirty = false;
-				__createUVs(true);
-				
+				__drawGL(renderSession, width, height, source, matrix, colorTransform, blendMode, clipRect, smoothing, __framebuffer == null, false, true);
 				
 				
 			default:
@@ -943,7 +881,7 @@ class BitmapData implements IBitmapDrawable {
 			
 		}
 		
-		if (__image.dirty) {
+		if (__image != null && __image.dirty) {
 			
 			var format = (__image.buffer.bitsPerPixel == 1 ? gl.ALPHA : gl.RGBA);
 			gl.bindTexture (gl.TEXTURE_2D, __texture);
@@ -1700,6 +1638,104 @@ class BitmapData implements IBitmapDrawable {
 		if (__worldTransform == null) __worldTransform = new Matrix();
 		if (__worldColorTransform == null) __worldColorTransform = new ColorTransform();
 		renderSession.spriteBatch.renderBitmapData(this, true, __worldTransform, __worldColorTransform);
+		
+	}
+	
+	
+	@:noCompletion @:dox(hide) public function __drawGL (renderSession:RenderSession, width:Int, height:Int, source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:BlendMode = null, clipRect:Rectangle = null, smoothing:Bool = false, drawSelf:Bool = false, clearBuffer:Bool = false, readPixels:Bool = false):Void {
+		
+		var gl:GLRenderContext = renderSession.gl;
+		if (gl == null) return;
+		
+		var spritebatch = renderSession.spriteBatch;
+		var mainProjection = renderSession.projection;
+		
+		if (clipRect == null) {
+			clipRect = new Rectangle(0, 0, width, height);
+		}
+		var tmpRect = clipRect.clone();
+		// Flip Y
+		tmpRect.y = height - tmpRect.bottom;
+		
+		renderSession.projection = new Point((width / 2), -(height / 2));
+		
+		if (__framebuffer == null) {
+			__framebuffer = new FilterTexture(gl, width, height, smoothing);
+		}
+		
+		__framebuffer.resize(width, height);
+		gl.bindFramebuffer(gl.FRAMEBUFFER, __framebuffer.frameBuffer);
+		
+		gl.viewport (0, 0, width, height);
+		
+		spritebatch.begin(renderSession, drawSelf ? null : tmpRect);
+		
+		// enable writing to all the colors and alpha
+		gl.colorMask(true, true, true, true);
+		renderSession.blendModeManager.setBlendMode(BlendMode.NORMAL);
+		
+		if (clearBuffer || drawSelf) {
+			__framebuffer.clear();
+		}
+		
+		if (drawSelf) {
+			this.__renderGL(renderSession);
+			spritebatch.stop();
+			// TODO remove the bitmap texture from vram when done?
+			spritebatch.start(tmpRect);
+		}
+		
+		var ctCache = source.__worldColorTransform;
+		var matrixCache = source.__worldTransform;
+		var blendModeCache = source.blendMode;
+		var cached = source.__cacheAsBitmap;
+		
+		source.__worldTransform = matrix != null ? matrix : new Matrix ();
+		source.__worldColorTransform = colorTransform != null ? colorTransform : new ColorTransform();
+		source.blendMode = blendMode;
+		source.__cacheAsBitmap = false;
+		
+		source.__updateChildren (false);
+		
+		source.__renderGL (renderSession);
+		
+		source.__worldColorTransform = ctCache;
+		source.__worldTransform = matrixCache;
+		source.blendMode = blendModeCache;
+		source.__cacheAsBitmap = cached;
+		
+		source.__updateChildren (true);
+		
+		spritebatch.finish();
+		
+		if (readPixels) {
+			
+			// TODO is this possible?
+			if (__image.width != width || __image.height != height) {
+				
+				__image.resize(width, height);
+				
+			}
+			
+			gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, __image.buffer.data);
+			
+		}
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, renderSession.defaultFramebuffer);
+		
+		gl.viewport(0, 0, renderSession.renderer.width, renderSession.renderer.height);
+		
+		renderSession.projection = mainProjection;
+		
+		gl.colorMask(true, true, true, renderSession.renderer.transparent);
+		
+		__texture = __framebuffer.texture;
+		if(__image != null) {
+			__image.dirty = false;
+			__image.premultiplied = true;
+		}
+		__createUVs(true);
+		__isValid = true;
 		
 	}
 	
