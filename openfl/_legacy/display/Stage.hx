@@ -1050,8 +1050,12 @@ class Stage extends DisplayObjectContainer {
 		#if !java
 		Timer.__checkTimers ();
 		#end
+		#if !disable_legacy_audio
 		SoundChannel.__pollComplete ();
+		#end
+		#if !disable_legacy_networking
 		URLLoader.__pollData ();
+		#end
 		__checkRender ();
 		
 	}
@@ -1181,17 +1185,21 @@ class Stage extends DisplayObjectContainer {
 		#else
 		var nextWake = Timer.__nextWake (315000000.0);
 		
+		#if !disable_legacy_audio
 		if (nextWake > 0.001 && SoundChannel.__dynamicSoundCount > 0) {
 			
 			nextWake = 0.001;
 			
 		}
+		#end
 		
-		if (nextWake > 0.02 && (SoundChannel.__completePending () || URLLoader.__loadPending ())) {
+		#if (!disable_legacy_audio || !disable_legacy_networking)
+		if (nextWake > 0.02 && (#if !disable_legacy_audio SoundChannel.__completePending () #else false #end || #if !disable_legacy_networking URLLoader.__loadPending () #else false #end )) {
 			
 			nextWake = (active || !pauseWhenDeactivated) ? 0.020 : 0.500;
 			
 		}
+		#end
 		
 		nextWake = __nextFrameDue (nextWake);
 		lime_stage_set_next_wake (__handle, nextWake);
