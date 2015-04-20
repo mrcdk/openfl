@@ -1704,8 +1704,8 @@ class BitmapData implements IBitmapDrawable {
 		
 		var m = matrix != null ? matrix.clone() : new Matrix ();
 		
-		var tx = matrix.tx;
-		var ty = matrix.ty;
+		var tx = m.tx;
+		var ty = m.ty;
 		m.tx = 0;
 		m.ty = 0;
 		m.scale(1, -1);
