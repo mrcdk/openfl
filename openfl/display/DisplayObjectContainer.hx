@@ -868,17 +868,18 @@ class DisplayObjectContainer extends InteractiveObject {
 				
 				var bounds = new Rectangle();
 				__getBounds(bounds, @:privateAccess Matrix.__identity);
-				
+				var w = Math.floor(bounds.width);
+				var h = Math.floor(bounds.height);
 				if (__cachedBitmap == null) {
-					__cachedBitmap = new BitmapData(0, 0);
+					__cachedBitmap = new BitmapData(w, h);
 				}
-				
-				__cachedBitmap.__drawGL(renderSession, Math.floor(bounds.width), Math.floor(bounds.height), this, false, false, true, false);
+
+				__cachedBitmap.__drawGL(renderSession, w, h, this, true, false, true, false);
 				
 				__updateCache = false;
 			}
 			
-			renderSession.spriteBatch.renderBitmapData(__cachedBitmap, true, __worldTransform, __worldColorTransform, __worldAlpha, blendMode);
+			renderSession.spriteBatch.renderBitmapData(__cachedBitmap, true, __worldTransform, __worldColorTransform, __worldAlpha, blendMode, true);
 			
 		} else {
 			

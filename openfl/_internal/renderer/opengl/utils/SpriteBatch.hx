@@ -148,9 +148,14 @@ class SpriteBatch {
 		flush();
 	}
 	
-	public function renderBitmapData(bitmapData:BitmapData, smoothing:Bool, matrix:Matrix, ct:ColorTransform, ?alpha:Float = 1, ?blendMode:BlendMode) {
+	public function renderBitmapData(bitmapData:BitmapData, smoothing:Bool, matrix:Matrix, ct:ColorTransform, ?alpha:Float = 1, ?blendMode:BlendMode, ?fromFramebuffer:Bool = false) {
 		if (bitmapData == null) return;
-		var texture = bitmapData.getTexture(gl);
+		var texture:GLTexture;
+		if (fromFramebuffer) {
+			texture = bitmapData.__framebuffer.texture;
+		} else {
+			texture = bitmapData.getTexture(gl);
+		}
 		
 		if (batchedSprites >= maxSprites) {
 			flush();
