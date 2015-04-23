@@ -143,6 +143,7 @@ class BitmapData implements IBitmapDrawable {
 	@:noCompletion private var __textureImage:Image;
 	@:noCompletion private var __framebuffer:FilterTexture;
 	@:noCompletion private var __uvData:TextureUvs;
+	@:noCompletion private var __usingFramebuffer:Bool = false;
 	
 	/**
 	 * Creates a BitmapData object with a specified width and height. If you specify a value for 
@@ -280,6 +281,7 @@ class BitmapData implements IBitmapDrawable {
 		if (!__isValid) return;
 		
 		__image.colorTransform (rect.__toLimeRectangle (), colorTransform.__toLimeColorMatrix ());
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -352,6 +354,7 @@ class BitmapData implements IBitmapDrawable {
 		}
 		
 		__image.copyChannel (sourceBitmapData.__image, sourceRect.__toLimeRectangle (), destPoint.__toLimeVector2 (), sourceChannel, destChannel);
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -400,7 +403,7 @@ class BitmapData implements IBitmapDrawable {
 		if (!__isValid || sourceBitmapData == null) return;
 		
 		__image.copyPixels (sourceBitmapData.__image, sourceRect.__toLimeRectangle (), destPoint.__toLimeVector2 (), alphaBitmapData != null ? alphaBitmapData.__image : null, alphaPoint != null ? alphaPoint.__toLimeVector2 () : null, mergeAlpha);
-		
+		__usingFramebuffer = false;
 	}
 	
 	
@@ -573,7 +576,7 @@ class BitmapData implements IBitmapDrawable {
 				
 				
 				var renderSession = @:privateAccess Lib.current.stage.__renderer.renderSession;
-				__drawGL(renderSession, width, height, source, matrix, colorTransform, blendMode, clipRect, smoothing, __framebuffer == null, false, true);
+				__drawGL(renderSession, width, height, source, matrix, colorTransform, blendMode, clipRect, smoothing, __framebuffer == null || !__usingFramebuffer, false, true);
 				
 				
 			default:
@@ -619,6 +622,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (!__isValid || rect == null) return;
 		__image.fillRect (rect.__toLimeRectangle (), color, ARGB);
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -638,6 +642,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (!__isValid) return;
 		__image.floodFill (x, y, color, ARGB);
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -875,6 +880,10 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (!__isValid) return null;
 		
+		if (__usingFramebuffer && __framebuffer != null) {
+			return __framebuffer.texture;
+		}
+		
 		if (__texture == null) {
 			
 			__texture = gl.createTexture ();
@@ -977,6 +986,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (!__isValid || sourceBitmapData == null || !sourceBitmapData.__isValid || sourceRect == null || destPoint == null) return;
 		__image.merge (sourceBitmapData.__image, sourceRect.__toLimeRectangle (), destPoint.__toLimeVector2 (), redMultiplier, greenMultiplier, blueMultiplier, alphaMultiplier);
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -1171,6 +1181,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (!__isValid) return;
 		__image.setPixel (x, y, color, ARGB);
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -1210,6 +1221,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (!__isValid) return;
 		__image.setPixel32 (x, y, color, ARGB);
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -1237,6 +1249,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		if (!__isValid || rect == null) return;
 		__image.setPixels (rect.__toLimeRectangle (), byteArray, ARGB);
+		__usingFramebuffer = false;
 		
 	}
 	
@@ -1688,7 +1701,7 @@ class BitmapData implements IBitmapDrawable {
 		if (drawSelf) {
 			this.__renderGL(renderSession);
 			spritebatch.stop();
-			// TODO remove the bitmap texture from vram when done?
+			gl.deleteTexture(__texture);
 			spritebatch.start(tmpRect);
 		}
 		
@@ -1748,7 +1761,7 @@ class BitmapData implements IBitmapDrawable {
 		
 		gl.colorMask(true, true, true, renderSession.renderer.transparent);
 		
-		__texture = __framebuffer.texture;
+		__usingFramebuffer = true;
 		if(__image != null) {
 			__image.dirty = false;
 			__image.premultiplied = true;
