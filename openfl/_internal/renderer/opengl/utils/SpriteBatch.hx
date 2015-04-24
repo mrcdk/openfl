@@ -397,24 +397,24 @@ class SpriteBatch {
 		var ty = matrix.ty;
 		var cOffsetIndex = 0;
 		
-		positions[index++] = (a * w1 + c * h1 + tx);
-		positions[index++] = (d * h1 + b * w1 + ty);
+		positions[index++] = (a * w1 + c * h1 + tx) + 0.375;
+		positions[index++] = (d * h1 + b * w1 + ty) + 0.375;
 		positions[index++] = uvs.x0;
 		positions[index++] = uvs.y0;
 		if(enableColor) {
 			colors[index++] = color;
 		}
 		
-		positions[index++] = (a * w0 + c * h1 + tx);
-		positions[index++] = (d * h1 + b * w0 + ty);
+		positions[index++] = (a * w0 + c * h1 + tx) + 0.375;
+		positions[index++] = (d * h1 + b * w0 + ty) + 0.375;
 		positions[index++] = uvs.x1;
 		positions[index++] = uvs.y1;
 		if(enableColor) {
 			colors[index++] = color;
 		}
 		
-		positions[index++] = (a * w0 + c * h0 + tx);
-		positions[index++] = (d * h0 + b * w0 + ty);
+		positions[index++] = (a * w0 + c * h0 + tx) + 0.375;
+		positions[index++] = (d * h0 + b * w0 + ty) + 0.375;
 		positions[index++] = uvs.x2;
 		positions[index++] = uvs.y2;
 		if(enableColor) {
@@ -422,8 +422,8 @@ class SpriteBatch {
 		}
 		
 		
-		positions[index++] = (a * w1 + c * h0 + tx);
-		positions[index++] = (d * h0 + b * w1 + ty);
+		positions[index++] = (a * w1 + c * h0 + tx) + 0.375;
+		positions[index++] = (d * h0 + b * w1 + ty) + 0.375;
 		positions[index++] = uvs.x3;
 		positions[index++] = uvs.y3;
 		if(enableColor) {
@@ -543,10 +543,13 @@ class SpriteBatch {
 		renderSession.blendModeManager.setBlendMode(state.blendMode);
 		gl.bindTexture(gl.TEXTURE_2D, state.texture);
 		
-		if (state.textureSmooth) {
-			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		} else {
+		//if (state.textureSmooth) 
+		//{
+			//gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			//gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		//}
+		//else 
+		{
 			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 			gl.texParameteri (gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);						
 		}
@@ -606,7 +609,7 @@ private class State {
 	public inline function equals(other:State) {
 		return ((shader == null || other.shader == null) || shader.ID == other.shader.ID) &&
 				texture == other.texture &&
-				textureSmooth == other.textureSmooth &&
+				//textureSmooth == other.textureSmooth &&
 				blendMode == other.blendMode &&
 				// colorTransform.alphaMultiplier == object.__worldAlpha so we can skip it
 				(colorTransform != null && colorTransform.__equals(other.colorTransform, skipColorTransformAlpha))
