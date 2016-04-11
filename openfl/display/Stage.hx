@@ -1004,6 +1004,7 @@ class Stage extends DisplayObjectContainer implements IModule {
 			
 		}
 		
+		/*
 		var cursor = null;
 		
 		for (target in stack) {
@@ -1024,6 +1025,7 @@ class Stage extends DisplayObjectContainer implements IModule {
 			Mouse.cursor = ARROW;
 			
 		}
+		*/
 		
 		var event, localPoint;
 		
