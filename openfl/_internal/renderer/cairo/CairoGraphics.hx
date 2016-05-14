@@ -2,6 +2,7 @@ package openfl._internal.renderer.cairo;
 
 
 import lime.graphics.cairo.Cairo;
+import lime.graphics.cairo.CairoAntialias;
 import lime.graphics.cairo.CairoExtend;
 import lime.graphics.cairo.CairoImageSurface;
 import lime.graphics.cairo.CairoPattern;
@@ -33,6 +34,8 @@ import openfl.Vector;
 
 
 class CairoGraphics {
+	
+	static public var ANTIALIAS:CairoAntialias = NONE;
 	
 	
 	private static var SIN45 = 0.70710678118654752440084436210485;
@@ -481,7 +484,7 @@ class CairoGraphics {
 		var startY = 0.0;
 		
 		cairo.fillRule = EVEN_ODD;
-		cairo.antialias = SUBPIXEL;
+		cairo.antialias = CairoGraphics.ANTIALIAS;
 		
 		var hasPath:Bool = false;
 		
@@ -1139,13 +1142,17 @@ class CairoGraphics {
 		
 	}
 	
+	public static inline function render(graphics:Graphics, renderSession:RenderSession):Void {
+		renderCustom(graphics, renderSession, false);
+	}
 	
-	public static function render (graphics:Graphics, renderSession:RenderSession):Void {
+	public static function renderCustom (graphics:Graphics, renderSession:RenderSession, skipCreation:Bool = false):Void {
 		
 		#if lime_cairo
 		CairoGraphics.graphics = graphics;
 		
 		if (!graphics.__dirty) return;
+		
 		
 		bounds = graphics.__bounds;
 		
@@ -1158,25 +1165,27 @@ class CairoGraphics {
 			
 			hitTesting = false;
 			
-			if (graphics.__cairo != null) {
-				
-				var surface:CairoImageSurface = cast graphics.__cairo.target;
-				
-				if (bounds.width != surface.width || bounds.height != surface.height) {
+			if(!skipCreation) {
+				if (graphics.__cairo != null) {
 					
-					graphics.__cairo = null;
+					var surface:CairoImageSurface = cast graphics.__cairo.target;
+					
+					if (bounds.width != surface.width || bounds.height != surface.height) {
+						
+						graphics.__cairo = null;
+						
+					}
 					
 				}
 				
-			}
-			
-			if (graphics.__cairo == null || graphics.__bitmap == null) {
-				
-				var bitmap = new BitmapData (Math.floor (bounds.width), Math.floor (bounds.height), true, 0);
-				var surface = bitmap.getSurface ();
-				graphics.__cairo = new Cairo (surface);
-				graphics.__bitmap = bitmap;
-				
+				if (graphics.__cairo == null || graphics.__bitmap == null) {
+					
+					var bitmap = new BitmapData (Math.floor (bounds.width), Math.floor (bounds.height), true, 0);
+					var surface = bitmap.getSurface ();
+					graphics.__cairo = new Cairo (surface);
+					graphics.__bitmap = bitmap;
+					
+				}
 			}
 			
 			cairo = graphics.__cairo;
@@ -1329,9 +1338,8 @@ class CairoGraphics {
 			data.destroy ();
 			
 			graphics.__bitmap.image.dirty = true;
-			
-		}
 		
+		}
 		graphics.__dirty = false;
 		
 		#end
