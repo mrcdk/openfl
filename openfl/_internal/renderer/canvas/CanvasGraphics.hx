@@ -808,8 +808,11 @@ class CanvasGraphics {
 		
 	}
 	
+	public static inline function render (graphics:Graphics, renderSession:RenderSession):Void {
+		renderCustom(graphics, renderSession);
+	}
 	
-	public static function render (graphics:Graphics, renderSession:RenderSession):Void {
+	public static function renderCustom (graphics:Graphics, renderSession:RenderSession, skipCreation:Bool = false):Void {
 		
 		#if (js && html5)
 		
@@ -827,32 +830,32 @@ class CanvasGraphics {
 			
 			if (!graphics.__visible || graphics.__commands.length == 0 || bounds == null || bounds.width <= 0 || bounds.height <= 0) {
 				
-				graphics.__canvas = null;
-				graphics.__context = null;
-				graphics.__bitmap = null;
+				if(!skipCreation) {
+					graphics.__canvas = null;
+					graphics.__context = null;
+					graphics.__bitmap = null;
+				}
 				
 			} else {
 				
-				if (directRender) {
-					
-					context = cast renderSession.context;
-					bounds.setTo (0, 0, context.canvas.width, context.canvas.width);
-					
-				} else {
-					
-					if (graphics.__canvas == null) {
+				if (!skipCreation) {
+					if (directRender) {
 						
-						graphics.__canvas = cast Browser.document.createElement ("canvas");
-						graphics.__context = graphics.__canvas.getContext ("2d");
+						context = cast renderSession.context;
+						bounds.setTo (0, 0, context.canvas.width, context.canvas.width);
 						
+					} else {
+						
+						if (graphics.__canvas == null) {
+							
+							graphics.__canvas = cast Browser.document.createElement ("canvas");
+							graphics.__context = graphics.__canvas.getContext ("2d");
+							
+						}
 					}
-					
-					context = graphics.__context;
-					
-					graphics.__canvas.width = Math.ceil (bounds.width);
-					graphics.__canvas.height = Math.ceil (bounds.height);
-					
 				}
+				
+				context = graphics.__context;
 				
 				fillCommands.clear ();
 				strokeCommands.clear ();
@@ -1277,7 +1280,7 @@ class CanvasGraphics {
 				}
 				
 				data.destroy ();
-				graphics.__bitmap = BitmapData.fromCanvas (graphics.__canvas);
+				if(!skipCreation) graphics.__bitmap = BitmapData.fromCanvas (graphics.__canvas);
 				
 			}
 			
