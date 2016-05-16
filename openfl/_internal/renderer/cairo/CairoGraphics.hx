@@ -1158,8 +1158,10 @@ class CairoGraphics {
 		
 		if (!graphics.__visible || graphics.__commands.length == 0 || bounds == null || bounds.width < 1 || bounds.height < 1) {
 			
+			if(!skipCreation) {
 			graphics.__cairo = null;
 			graphics.__bitmap = null;
+			}
 			
 		} else {
 			
