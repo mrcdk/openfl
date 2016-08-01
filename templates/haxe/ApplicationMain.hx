@@ -57,7 +57,16 @@ class ApplicationMain {
 		preloader.load (urls, types);
 		#end
 		
-		var result = app.exec ();
+		var result = 0;
+		try {
+			result = app.exec ();
+		} catch (e:Dynamic) {
+			if (openfl.Lib.current != null && openfl.Lib.current.loaderInfo != null && openfl.Lib.current.loaderInfo.uncaughtErrorEvents != null) {
+				var event = new openfl.events.UncaughtErrorEvent(openfl.events.UncaughtErrorEvent.UNCAUGHT_ERROR, false, false, e);
+				openfl.Lib.current.loaderInfo.uncaughtErrorEvents.dispatchEvent(event);
+			}
+		}
+		
 		
 		#if (sys && !nodejs && !emscripten)
 		Sys.exit (result);
