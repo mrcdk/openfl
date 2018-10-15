@@ -40,7 +40,12 @@ class GLRectangleTexture {
 		#end
 		
 		rectangleTexture.__textureTarget = gl.TEXTURE_2D;
+		#if mac
+		var b = new UInt8Array (rectangleTexture.__width * rectangleTexture.__height * 4);
+		uploadFromTypedArray (rectangleTexture, renderer, b);
+		#else
 		uploadFromTypedArray (rectangleTexture, renderer, null);
+		#end
 		
 	}
 	
