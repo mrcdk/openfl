@@ -535,8 +535,15 @@ class Sound extends EventDispatcher {
 			
 			#else
 			
-			var samples = (__buffer.data.length * 8) / (__buffer.channels * __buffer.bitsPerSample);
-			return Std.int (samples / __buffer.sampleRate * 1000);
+			@:privateAccess {
+				if (__buffer.__srcVorbisFile != null) {
+					return Std.int(__buffer.__srcVorbisFile.timeTotal () * 1000);
+				} else {
+					var samples = (__buffer.data.length * 8) / (__buffer.channels * __buffer.bitsPerSample);
+					return Std.int (samples / __buffer.sampleRate * 1000);
+				}
+			}
+			
 			
 			#end
 			
