@@ -77,7 +77,6 @@ class GLTexture {
 		
 		reader.readTextures (function (target, level, gpuFormat, width, height, blockLength, bytes:Bytes) {
 			
-			#if (lime < "7.0.0") // TODO
 			var format = GLTextureBase.__compressedTextureFormats.toTextureFormat (alpha, gpuFormat);
 			if (format == 0) return;
 			
@@ -89,7 +88,7 @@ class GLTexture {
 				
 				var size = Std.int (blockLength / 2);
 				
-				gl.compressedTexImage2D (texture.__textureTarget, level, texture.__internalFormat, width, height, 0, size, bytes);
+				gl.compressedTexImage2D (texture.__textureTarget, level, texture.__internalFormat, width, height, 0, new UInt8Array(bytes, 0, size));
 				GLUtils.CheckGLError ();
 				
 				var alphaTexture = new Texture (texture.__context, texture.__width, texture.__height, Context3DTextureFormat.COMPRESSED, texture.__optimizeForRenderToTexture, texture.__streamingLevels);
@@ -99,20 +98,17 @@ class GLTexture {
 				gl.bindTexture (alphaTexture.__textureTarget, alphaTexture.__textureID);
 				GLUtils.CheckGLError ();
 				
-				gl.compressedTexImage2D (alphaTexture.__textureTarget, level, alphaTexture.__internalFormat, width, height, 0, size, new BytePointer (bytes, size));
+				gl.compressedTexImage2D (alphaTexture.__textureTarget, level, alphaTexture.__internalFormat, width, height, 0, new UInt8Array(bytes, size, size));
 				GLUtils.CheckGLError ();
 				
 				texture.__alphaTexture = alphaTexture;
-				
+
 			} else {
 				
-				gl.compressedTexImage2D (texture.__textureTarget, level, texture.__internalFormat, width, height, 0, blockLength, bytes);
+				gl.compressedTexImage2D (texture.__textureTarget, level, texture.__internalFormat, width, height, 0, new UInt8Array(bytes, 0, blockLength));
 				GLUtils.CheckGLError ();
 				
 			}
-			
-			// __trackCompressedMemoryUsage (blockLength);
-			#end
 			
 		});
 		

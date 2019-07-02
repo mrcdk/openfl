@@ -1065,7 +1065,7 @@ class GLContext3D {
 						gl.uniform1i (context.__program.__alphaSamplerEnabled[sampler].location, 1);
 						GLUtils.CheckGLError ();
 						
-					} else {
+					} else if(context.__program.__alphaSamplerEnabled[sampler] != null) {
 						
 						gl.bindTexture (gl.TEXTURE_2D, null);
 						GLUtils.CheckGLError ();
